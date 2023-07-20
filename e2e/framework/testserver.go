@@ -21,15 +21,14 @@ import (
 	"testing"
 	"time"
 
-	"tynmo/command/genesis/predeploy"
-
 	"tynmo/command"
 	"tynmo/command/genesis"
+	"tynmo/command/genesis/predeploy"
 	ibftSwitch "tynmo/command/ibft/switch"
 	initCmd "tynmo/command/secrets/init"
 	"tynmo/command/server"
-	"tynmo/consensus/tynmobft/fork"
 	tynmobftOp "tynmo/consensus/proto"
+	"tynmo/consensus/tynmobft/fork"
 	"tynmo/crypto"
 	stakingHelper "tynmo/helper/staking"
 	"tynmo/helper/tests"
@@ -40,6 +39,7 @@ import (
 	txpoolProto "tynmo/txpool/proto"
 	"tynmo/types"
 	"tynmo/validators"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/umbracle/ethgo"
@@ -147,7 +147,7 @@ func (t *TestServer) TxnPoolOperator() txpoolProto.TxnPoolOperatorClient {
 	return txpoolProto.NewTxnPoolOperatorClient(conn)
 }
 
-func (t *TestServer) IBFTOperator() tynmobftOp.IbftOperatorClient {
+func (t *TestServer) IBFTOperator() tynmobftOp.BftOperatorClient {
 	conn, err := grpc.Dial(
 		t.GrpcAddr(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -155,7 +155,7 @@ func (t *TestServer) IBFTOperator() tynmobftOp.IbftOperatorClient {
 		t.t.Fatal(err)
 	}
 
-	return tynmobftOp.NewIbftOperatorClient(conn)
+	return tynmobftOp.NewBftOperatorClient(conn)
 }
 
 func (t *TestServer) ReleaseReservedPorts() {

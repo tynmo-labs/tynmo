@@ -9,6 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/any"
+	"github.com/stretchr/testify/assert"
+	"github.com/umbracle/ethgo"
+	"github.com/umbracle/ethgo/jsonrpc"
+
 	ibftOp "tynmo/consensus/proto"
 	"tynmo/contracts/staking"
 	"tynmo/crypto"
@@ -17,10 +22,6 @@ import (
 	"tynmo/helper/tests"
 	txpoolOp "tynmo/txpool/proto"
 	"tynmo/types"
-	"github.com/golang/protobuf/ptypes/any"
-	"github.com/stretchr/testify/assert"
-	"github.com/umbracle/ethgo"
-	"github.com/umbracle/ethgo/jsonrpc"
 )
 
 // foundInValidatorSet is a helper function for searching through the passed in set for a specific
@@ -720,7 +721,7 @@ func TestPoS_StakeUnstakeWithinSameBlock(t *testing.T) {
 }
 
 func getSnapshot(
-	client ibftOp.IbftOperatorClient,
+	client ibftOp.BftOperatorClient,
 	blockNum uint64,
 	ctx context.Context,
 ) (*ibftOp.Snapshot, error) {
@@ -830,7 +831,7 @@ func TestSnapshotUpdating(t *testing.T) {
 	}
 
 	// Grab all the operators
-	serverOperators := make([]ibftOp.IbftOperatorClient, totalServers)
+	serverOperators := make([]ibftOp.BftOperatorClient, totalServers)
 	for i := 0; i < totalServers; i++ {
 		serverOperators[i] = ibftManager.GetServer(i).IBFTOperator()
 	}
@@ -838,7 +839,7 @@ func TestSnapshotUpdating(t *testing.T) {
 	// isValidatorInSnapshot checks if a certain reference address
 	// is among the validators for the specific snapshot
 	isValidatorInSnapshot := func(
-		client ibftOp.IbftOperatorClient,
+		client ibftOp.BftOperatorClient,
 		blockNumber uint64,
 		referenceAddr types.Address,
 	) bool {

@@ -15,6 +15,7 @@ import (
 	"tynmo/command/server"
 	"tynmo/command/start"
 	"tynmo/command/status"
+	"tynmo/command/tbft"
 	"tynmo/command/txpool"
 	"tynmo/command/version"
 	"tynmo/command/whitelist"
@@ -55,6 +56,7 @@ func (rc *RootCommand) registerSubCommands() {
 		start.GetCommand(),
 		whitelist.GetCommand(),
 		license.GetCommand(),
+		tbft.GetCommand(),
 	)
 }
 
