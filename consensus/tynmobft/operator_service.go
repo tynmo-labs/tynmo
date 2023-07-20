@@ -30,6 +30,7 @@ type Votable interface {
 	Votes(uint64) ([]*store.Vote, error)
 	Candidates() []*store.Candidate
 	Propose(validators.Validator, bool, types.Address) error
+	AddValidator(validators.Validator, bool, types.Address, uint64) error
 }
 
 // Status returns the status of the IBFT client
@@ -100,6 +101,31 @@ func (o *operator) Propose(ctx context.Context, req *proto.Candidate) (*empty.Em
 	}
 
 	if err := votableSet.Propose(candidate, req.Auth, o.ibft.currentSigner.Address()); err != nil {
+		return nil, err
+	}
+
+	return &empty.Empty{}, nil
+}
+
+// AddValidator proposes a new candidate to be added / removed from the validator set
+func (o *operator) AddValidator(ctx context.Context, req *proto.Candidate) (*empty.Empty, error) {
+	votableSet, err := o.getVotableValidatorStore()
+	if err != nil {
+		return nil, err
+	}
+
+	reqcandidate := &proto.Candidate{
+		Address:   req.Address,
+		BlsPubkey: req.BlsPubkey,
+		Auth:      req.Auth,
+	}
+
+	candidate, err := o.parseCandidate(reqcandidate)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := votableSet.AddValidator(candidate, req.Auth, o.ibft.currentSigner.Address(), req.From); err != nil {
 		return nil, err
 	}
 

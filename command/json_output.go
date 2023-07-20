@@ -34,6 +34,11 @@ func (jo *JSONOutput) getErrorOutput() string {
 	)
 }
 
+// WriteOutput implements OutputFormatter plus io.Writer interfaces
+func (jo *JSONOutput) Write(p []byte) (n int, err error) {
+	return os.Stdout.Write(p)
+}
+
 func (jo *JSONOutput) getCommandOutput() string {
 	return marshalJSONToString(jo.commandOutput)
 }

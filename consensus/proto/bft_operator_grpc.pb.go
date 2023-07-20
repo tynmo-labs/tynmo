@@ -20,10 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	BftOperator_GetSnapshot_FullMethodName = "/v1.BftOperator/GetSnapshot"
-	BftOperator_Propose_FullMethodName     = "/v1.BftOperator/Propose"
-	BftOperator_Candidates_FullMethodName  = "/v1.BftOperator/Candidates"
-	BftOperator_Status_FullMethodName      = "/v1.BftOperator/Status"
+	BftOperator_GetSnapshot_FullMethodName  = "/v1.BftOperator/GetSnapshot"
+	BftOperator_Propose_FullMethodName      = "/v1.BftOperator/Propose"
+	BftOperator_Candidates_FullMethodName   = "/v1.BftOperator/Candidates"
+	BftOperator_Status_FullMethodName       = "/v1.BftOperator/Status"
+	BftOperator_AddValidator_FullMethodName = "/v1.BftOperator/AddValidator"
 )
 
 // BftOperatorClient is the client API for BftOperator service.
@@ -34,6 +35,7 @@ type BftOperatorClient interface {
 	Propose(ctx context.Context, in *Candidate, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Candidates(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*CandidatesResp, error)
 	Status(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*BftStatusResp, error)
+	AddValidator(ctx context.Context, in *Candidate, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type bftOperatorClient struct {
@@ -80,6 +82,15 @@ func (c *bftOperatorClient) Status(ctx context.Context, in *emptypb.Empty, opts 
 	return out, nil
 }
 
+func (c *bftOperatorClient) AddValidator(ctx context.Context, in *Candidate, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, BftOperator_AddValidator_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BftOperatorServer is the server API for BftOperator service.
 // All implementations must embed UnimplementedBftOperatorServer
 // for forward compatibility
@@ -88,6 +99,7 @@ type BftOperatorServer interface {
 	Propose(context.Context, *Candidate) (*emptypb.Empty, error)
 	Candidates(context.Context, *emptypb.Empty) (*CandidatesResp, error)
 	Status(context.Context, *emptypb.Empty) (*BftStatusResp, error)
+	AddValidator(context.Context, *Candidate) (*emptypb.Empty, error)
 	mustEmbedUnimplementedBftOperatorServer()
 }
 
@@ -106,6 +118,9 @@ func (UnimplementedBftOperatorServer) Candidates(context.Context, *emptypb.Empty
 }
 func (UnimplementedBftOperatorServer) Status(context.Context, *emptypb.Empty) (*BftStatusResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
+}
+func (UnimplementedBftOperatorServer) AddValidator(context.Context, *Candidate) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddValidator not implemented")
 }
 func (UnimplementedBftOperatorServer) mustEmbedUnimplementedBftOperatorServer() {}
 
@@ -192,6 +207,24 @@ func _BftOperator_Status_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BftOperator_AddValidator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Candidate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BftOperatorServer).AddValidator(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BftOperator_AddValidator_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BftOperatorServer).AddValidator(ctx, req.(*Candidate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BftOperator_ServiceDesc is the grpc.ServiceDesc for BftOperator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -214,6 +247,10 @@ var BftOperator_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Status",
 			Handler:    _BftOperator_Status_Handler,
+		},
+		{
+			MethodName: "AddValidator",
+			Handler:    _BftOperator_AddValidator_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

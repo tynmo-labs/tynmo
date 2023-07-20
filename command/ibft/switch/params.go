@@ -179,6 +179,7 @@ func (p *switchParams) setValidatorSetFromPrefixPath() error {
 	}
 
 	validators, err := command.GetValidatorsFromPrefixPath(
+		"",
 		p.ibftValidatorPrefixPath,
 		p.ibftValidatorType,
 	)

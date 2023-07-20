@@ -3,6 +3,7 @@ package genesis
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"tynmo/chain"
 	"tynmo/command"
@@ -185,7 +186,14 @@ func (p *genesisParams) setValidatorSetFromPrefixPath() error {
 		return nil
 	}
 
+	var path string
+	splilts := strings.Split(p.genesisPath, "/")
+	if len(splilts) > 1 {
+		path = strings.Join(splilts[:len(splilts)-1], "/")
+	}
+
 	validators, err := command.GetValidatorsFromPrefixPath(
+		path,
 		p.validatorPrefixPath,
 		p.ibftValidatorType,
 	)
