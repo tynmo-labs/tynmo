@@ -56,10 +56,14 @@ func ValidateMinMaxValidatorsNumber(minValidatorCount uint64, maxValidatorCount 
 // GetValidatorsFromPrefixPath extracts the addresses of the validators based on the directory
 // prefix. It scans the directories for validator private keys and compiles a list of addresses
 func GetValidatorsFromPrefixPath(
+	path string,
 	prefix string,
 	validatorType validators.ValidatorType,
 ) (validators.Validators, error) {
-	files, err := os.ReadDir(".")
+	if path == "" {
+		path = "."
+	}
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}

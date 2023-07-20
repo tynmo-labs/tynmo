@@ -21,6 +21,9 @@ type OutputFormatter interface {
 
 	// WriteOutput writes the result / error output
 	WriteOutput()
+
+	// Write extends io.Writer interface
+	Write(p []byte) (n int, err error)
 }
 
 type CommandResult interface {
@@ -28,7 +31,12 @@ type CommandResult interface {
 }
 
 func shouldOutputJSON(baseCmd *cobra.Command) bool {
-	return baseCmd.Flag(JSONOutputFlag).Changed
+	jsonOutputFlag := baseCmd.Flag(JSONOutputFlag)
+	if jsonOutputFlag == nil {
+		return false
+	}
+
+	return jsonOutputFlag.Changed
 }
 
 func InitializeOutputter(cmd *cobra.Command) OutputFormatter {

@@ -1,14 +1,15 @@
 package ibft
 
 import (
+	"github.com/spf13/cobra"
 	"tynmo/command/helper"
+	"tynmo/command/ibft/add_validator"
 	"tynmo/command/ibft/candidates"
 	"tynmo/command/ibft/propose"
 	"tynmo/command/ibft/quorum"
 	"tynmo/command/ibft/snapshot"
 	"tynmo/command/ibft/status"
 	_switch "tynmo/command/ibft/switch"
-	"github.com/spf13/cobra"
 )
 
 func GetCommand() *cobra.Command {
@@ -38,5 +39,6 @@ func registerSubcommands(baseCmd *cobra.Command) {
 		_switch.GetCommand(),
 		// ibft quorum
 		quorum.GetCommand(),
+		add_validator.GetCommand(),
 	)
 }

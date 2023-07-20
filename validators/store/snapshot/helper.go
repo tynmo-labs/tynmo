@@ -33,6 +33,17 @@ func shouldProcessVote(
 	return voteAction != validators.Includes(candidate)
 }
 
+func shouldProcessAddValidator(
+	validators validators.Validators,
+	candidate types.Address,
+	action bool, // true => add, false => remove
+) bool {
+	// if vote action is...
+	// true  => validator set expects not to have a candidate
+	// false => validator set expects     to have a candidate
+	return action != validators.Includes(candidate)
+}
+
 // addsOrDelsCandidate is a helper function to add/remove candidate to/from validators
 func addsOrDelsCandidate(
 	validators validators.Validators,

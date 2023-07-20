@@ -23,10 +23,19 @@ func (cli *CLIOutput) WriteOutput() {
 	_, _ = fmt.Fprintln(os.Stdout, cli.getCommandOutput())
 }
 
+// WriteOutput implements OutputFormatter plus io.Writer interfaces
+func (cli *CLIOutput) Write(p []byte) (n int, err error) {
+	return os.Stdout.Write(p)
+}
+
 func (cli *CLIOutput) getErrorOutput() string {
 	return cli.errorOutput.Error()
 }
 
 func (cli *CLIOutput) getCommandOutput() string {
+	if cli.commandOutput == nil {
+		return ""
+	}
+
 	return cli.commandOutput.GetOutput()
 }

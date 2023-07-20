@@ -42,6 +42,7 @@ var (
 	ErrCandidateNotExistInSet       = errors.New("cannot remove a validator if they're not in the snapshot")
 	ErrAlreadyVoted                 = errors.New("already voted for this address")
 	ErrMultipleVotesBySameValidator = errors.New("more than one proposal per validator per address found")
+	ErrMultipleAddsBySameValidator  = errors.New("more than one proposal for add validator found")
 )
 
 type SnapshotValidatorStore struct {
@@ -57,6 +58,9 @@ type SnapshotValidatorStore struct {
 	store          *snapshotStore
 	candidates     []*store.Candidate
 	candidatesLock sync.RWMutex
+
+	validatorsAdd     []*store.Candidate
+	validatorsAddLock sync.RWMutex
 }
 
 // NewSnapshotValidatorStore creates and initializes *SnapshotValidatorStore
@@ -69,13 +73,15 @@ func NewSnapshotValidatorStore(
 	snapshots []*Snapshot,
 ) (*SnapshotValidatorStore, error) {
 	set := &SnapshotValidatorStore{
-		logger:         logger.Named(loggerName),
-		store:          newSnapshotStore(metadata, snapshots),
-		blockchain:     blockchain,
-		getSigner:      getSigner,
-		candidates:     make([]*store.Candidate, 0),
-		candidatesLock: sync.RWMutex{},
-		epochSize:      epochSize,
+		logger:            logger.Named(loggerName),
+		store:             newSnapshotStore(metadata, snapshots),
+		blockchain:        blockchain,
+		getSigner:         getSigner,
+		candidates:        make([]*store.Candidate, 0),
+		candidatesLock:    sync.RWMutex{},
+		validatorsAdd:     make([]*store.Candidate, 0),
+		validatorsAddLock: sync.RWMutex{},
+		epochSize:         epochSize,
 	}
 
 	if err := set.initialize(); err != nil {
@@ -232,6 +238,21 @@ func (s *SnapshotValidatorStore) ModifyHeader(header *types.Header, proposer typ
 		}
 	}
 
+	if candidate := s.getNextValidatorCandidate(snapshot, proposer); candidate != nil {
+		var err error
+
+		header.Miner, err = validatorToMiner(candidate.Validator)
+		if err != nil {
+			return err
+		}
+
+		if candidate.Authorize {
+			header.Nonce = nonceAuthVote
+		} else {
+			header.Nonce = nonceDropVote
+		}
+	}
+
 	return nil
 }
 
@@ -315,6 +336,10 @@ func (s *SnapshotValidatorStore) ProcessHeader(
 		return nil
 	}
 
+	if err := processAddValidator(snap, header, signer.Type(), proposer); err != nil {
+		return err
+	}
+
 	// Process votes in the middle of epoch
 	if err := processVote(snap, header, signer.Type(), proposer); err != nil {
 		return err
@@ -366,6 +391,40 @@ func (s *SnapshotValidatorStore) Propose(candidate validators.Validator, auth bo
 	)
 }
 
+// Propose adds new candidate for vote
+func (s *SnapshotValidatorStore) AddValidator(candidate validators.Validator, auth bool, proposer types.Address, number uint64) error {
+	s.validatorsAddLock.Lock()
+	defer s.validatorsAddLock.Unlock()
+
+	candidateAddr := candidate.Addr()
+
+	for _, c := range s.validatorsAdd {
+		if c.Validator.Addr() == candidateAddr {
+			return ErrAlreadyCandidate
+		}
+	}
+
+	snap := s.getLatestSnapshot()
+	if snap == nil {
+		return ErrSnapshotNotFound
+	}
+
+	included := snap.Set.Includes(candidateAddr)
+
+	// safe checks
+	if auth && included {
+		return ErrCandidateIsValidator
+	} else if !auth && !included {
+		return ErrCandidateNotExistInSet
+	}
+
+	return s.addValidatorCandidate(
+		snap.Set,
+		candidate,
+		auth,
+	)
+}
+
 // AddCandidate adds new candidate to candidate list
 // unsafe against concurrent access
 func (s *SnapshotValidatorStore) addCandidate(
@@ -391,6 +450,36 @@ func (s *SnapshotValidatorStore) addCandidate(
 	}
 
 	s.candidates = append(s.candidates, &store.Candidate{
+		Validator: validators.At(uint64(validatorIndex)),
+		Authorize: authrorize,
+	})
+
+	return nil
+}
+
+func (s *SnapshotValidatorStore) addValidatorCandidate(
+	validators validators.Validators,
+	candidate validators.Validator,
+	authrorize bool,
+) error {
+	if authrorize {
+		s.validatorsAdd = append(s.validatorsAdd, &store.Candidate{
+			Validator: candidate,
+			Authorize: authrorize,
+		})
+
+		return nil
+	}
+
+	// Get candidate validator information from set
+	// because don't want user to specify data except for address
+	// in case of removal
+	validatorIndex := validators.Index(candidate.Addr())
+	if validatorIndex == -1 {
+		return ErrCandidateNotExistInSet
+	}
+
+	s.validatorsAdd = append(s.validatorsAdd, &store.Candidate{
 		Validator: validators.At(uint64(validatorIndex)),
 		Authorize: authrorize,
 	})
@@ -451,6 +540,21 @@ func (s *SnapshotValidatorStore) getNextCandidate(
 	return s.pickOneCandidate(snap, proposer)
 }
 
+func (s *SnapshotValidatorStore) getNextValidatorCandidate(
+	snap *Snapshot,
+	proposer types.Address,
+) *store.Candidate {
+	s.validatorsAddLock.Lock()
+	defer s.validatorsAddLock.Unlock()
+
+	// first, we need to remove any candidates that have already been
+	// selected as validators
+	s.cleanObsoleteValidatorCandidates(snap.Set)
+
+	// now pick the first candidate that has not received a vote yet
+	return s.pickOneValidatorCandidate(snap, proposer)
+}
+
 // cleanObsolateCandidates removes useless candidates from candidates field
 // Unsafe against concurrent accesses
 func (s *SnapshotValidatorStore) cleanObsoleteCandidates(set validators.Validators) {
@@ -469,6 +573,22 @@ func (s *SnapshotValidatorStore) cleanObsoleteCandidates(set validators.Validato
 	s.candidates = newCandidates
 }
 
+func (s *SnapshotValidatorStore) cleanObsoleteValidatorCandidates(set validators.Validators) {
+	newCandidates := make([]*store.Candidate, 0, len(s.candidates))
+
+	for _, candidate := range s.validatorsAdd {
+		// If Authorize is
+		// true => Candidate needs to be in Set
+		// false => Candidate needs not to be in Set
+		// if the current situetion is not so, it's still a candidate
+		if candidate.Authorize != set.Includes(candidate.Validator.Addr()) {
+			newCandidates = append(newCandidates, candidate)
+		}
+	}
+
+	s.validatorsAdd = newCandidates
+}
+
 // pickOneCandidate returns a proposer candidate from candidates field
 // Unsafe against concurrent accesses
 func (s *SnapshotValidatorStore) pickOneCandidate(
@@ -481,6 +601,20 @@ func (s *SnapshotValidatorStore) pickOneCandidate(
 		count := snap.Count(func(v *store.Vote) bool {
 			return v.Candidate.Addr() == addr && v.Validator == proposer
 		})
+		if count == 0 {
+			return c
+		}
+	}
+
+	return nil
+}
+
+func (s *SnapshotValidatorStore) pickOneValidatorCandidate(
+	snap *Snapshot,
+	proposer types.Address,
+) *store.Candidate {
+	for _, c := range s.validatorsAdd {
+		count := 0
 
 		if count == 0 {
 			return c
@@ -568,6 +702,56 @@ func processVote(
 
 	// If more than a half of all validators voted
 	if totalVotes > snapshot.Set.Len()/2 {
+		if err := addsOrDelsCandidate(
+			snapshot.Set,
+			candidate,
+			authorize,
+		); err != nil {
+			return err
+		}
+
+		if !authorize {
+			// remove any votes casted by the removed validator
+			snapshot.RemoveVotesByVoter(candidate.Addr())
+		}
+
+		// remove all the votes that promoted this validator
+		snapshot.RemoveVotesByCandidate(candidate)
+	}
+
+	return nil
+}
+
+func processAddValidator(
+	snapshot *Snapshot,
+	header *types.Header,
+	candidateType validators.ValidatorType,
+	proposer types.Address,
+) error {
+	// the nonce selects the acti
+	authorize, err := isAuthorize(header.Nonce)
+	if err != nil {
+		return err
+	}
+
+	// parse candidate validator set from header.Miner
+	candidate, err := minerToValidator(candidateType, header.Miner)
+	if err != nil {
+		return err
+	}
+
+	// if candidate has been processed as expected, just update last block
+	if !shouldProcessAddValidator(snapshot.Set, candidate.Addr(), authorize) {
+		return nil
+	}
+
+	voteCount := snapshot.CountByVoterAndCandidate(proposer, candidate)
+	if voteCount > 1 {
+		// there can only be one vote per validator per address
+		return ErrMultipleAddsBySameValidator
+	}
+
+	if voteCount > 0 {
 		if err := addsOrDelsCandidate(
 			snapshot.Set,
 			candidate,
