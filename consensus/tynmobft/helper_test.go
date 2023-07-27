@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"strconv"
 	"testing"
-
 	"tynmo/crypto"
 	"tynmo/types"
 	"tynmo/validators"
