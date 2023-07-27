@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "/consensus/ibft/proto";
+
+import "google/protobuf/empty.proto";
+
+service V0IbftOperator {
+    rpc GetSnapshot(V0SnapshotReq) returns (V0Snapshot);
+    rpc Propose(V0Candidate) returns (google.protobuf.Empty);
+    rpc Candidates(google.protobuf.Empty) returns (V0CandidatesResp);
+    rpc Status(google.protobuf.Empty) returns (V0IbftStatusResp);
+}
+
+message V0IbftStatusResp {
+    string key = 1;
+}
+
+message V0SnapshotReq {
+    bool latest = 1;
+    uint64 number = 2;
+}
+
+message V0Snapshot {
+    repeated V0Validator validators = 1;
+
+    uint64 number = 2;
+
+    string hash = 3;
+
+    repeated V0Vote votes = 4;
+
+    message V0Validator {
+        string type = 1;
+        string address = 2;
+        bytes data = 3;
+    }
+
+    message V0Vote {
+        string validator = 1;
+        string proposed = 2;
+        bool auth = 3;
+    }
+}
+
+message V0ProposeReq {
+    string address = 1;
+    bool auth = 2;
+}
+
+message V0CandidatesResp {
+    repeated V0Candidate candidates = 1;
+}
+
+message V0Candidate {
+    string address = 1;
+    bytes bls_pubkey = 2;
+    bool auth = 3;
+}
