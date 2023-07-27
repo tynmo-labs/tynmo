@@ -9,7 +9,7 @@ import (
 
 	"tynmo/command"
 	"tynmo/command/helper"
-	ibftOp "tynmo/consensus/tynmobft/proto"
+	ibftOp "tynmo/consensus/proto"
 	"tynmo/crypto"
 	"tynmo/types"
 )

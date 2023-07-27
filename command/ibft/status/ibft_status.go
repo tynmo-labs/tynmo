@@ -3,11 +3,11 @@ package status
 import (
 	"context"
 
-	"tynmo/command"
-	"tynmo/command/helper"
-	ibftOp "tynmo/consensus/tynmobft/proto"
 	"github.com/spf13/cobra"
 	empty "google.golang.org/protobuf/types/known/emptypb"
+	"tynmo/command"
+	"tynmo/command/helper"
+	ibftOp "tynmo/consensus/proto"
 )
 
 func GetCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	})
 }
 
-func getIBFTStatus(grpcAddress string) (*ibftOp.IbftStatusResp, error) {
+func getIBFTStatus(grpcAddress string) (*ibftOp.BftStatusResp, error) {
 	client, err := helper.GetIBFTOperatorClientConnection(
 		grpcAddress,
 	)

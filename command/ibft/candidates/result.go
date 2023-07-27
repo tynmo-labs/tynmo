@@ -6,7 +6,7 @@ import (
 
 	"tynmo/command/helper"
 	ibftHelper "tynmo/command/ibft/helper"
-	ibftOp "tynmo/consensus/tynmobft/proto"
+	ibftOp "tynmo/consensus/proto"
 )
 
 type IBFTCandidate struct {

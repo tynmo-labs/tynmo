@@ -5,8 +5,7 @@ protoc:
 	protoc --go_out=. --go-grpc_out=. ./network/proto/*.proto
 	protoc --go_out=. --go-grpc_out=. ./txpool/proto/*.proto
 	protoc --go_out=. --go-grpc_out=. ./syncer/proto/*.proto
-	protoc --go_out=. --go-grpc_out=. ./consensus/ibft/**/*.proto
-	protoc --go_out=. --go-grpc_out=. ./consensus/tynmobft/**/*.proto
+	protoc --go_out=. --go-grpc_out=. ./consensus/proto/*.proto
 
 .PHONY: build
 build:
@@ -14,7 +13,7 @@ build:
 	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
 	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
 	$(eval TIME = $(shell date))
-	go build -o tynmo -ldflags="\
+	go build -o bin/tynmo -ldflags="\
     	-X 'tynmo/versioning.Version=$(LATEST_VERSION)' \
 		-X 'tynmo/versioning.Commit=$(COMMIT_HASH)'\
 		-X 'tynmo/versioning.Branch=$(BRANCH)'\

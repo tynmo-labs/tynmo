@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"tynmo/command/helper"
-	ibftOp "tynmo/consensus/tynmobft/proto"
+	ibftOp "tynmo/consensus/proto"
 )
 
 const (
