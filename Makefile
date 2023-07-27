@@ -9,6 +9,7 @@ protoc:
 
 .PHONY: build
 build:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 	$(eval LATEST_VERSION = $(shell git describe --tags --abbrev=0))
 	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
 	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))

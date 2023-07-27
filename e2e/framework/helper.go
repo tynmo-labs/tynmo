@@ -21,6 +21,7 @@ import (
 	"tynmo/server/proto"
 	txpoolProto "tynmo/txpool/proto"
 	"tynmo/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/ethgo"
 	"github.com/umbracle/ethgo/jsonrpc"
@@ -165,6 +166,35 @@ func UnstakeAmount(
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to call Staking contract method unstake, %w", err)
+	}
+
+	return receipt, nil
+}
+
+// WithdrawstakeAmount is a helper function for withdraw stake amount on the Staking SC
+func WithdrawstakeAmount(
+	from types.Address,
+	senderKey *ecdsa.PrivateKey,
+	amount *big.Int,
+	srv *TestServer,
+) (*ethgo.Receipt, error) {
+	// Stake Balance
+	txn := &PreparedTransaction{
+		From:     from,
+		To:       &staking.AddrStakingContract,
+		GasPrice: big.NewInt(DefaultGasPrice),
+		Gas:      DefaultGasLimit,
+		Value:    amount,
+		Input:    MethodSig("withdrawStake"),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	receipt, err := srv.SendRawTx(ctx, txn, senderKey)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to call Staking contract method withdrawStake, %w", err)
 	}
 
 	return receipt, nil
