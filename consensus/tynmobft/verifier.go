@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 
-	"tynmo/types"
 	"go-ibft/messages"
 	protoIBFT "go-ibft/messages/proto"
+	"tynmo/types"
 )
 
 // Verifier impl for go-ibft

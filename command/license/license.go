@@ -1,8 +1,8 @@
 package license
 
 import (
-	"github.com/spf13/cobra"
 	"tynmo/command"
+	"github.com/spf13/cobra"
 
 	"tynmo/licenses"
 )

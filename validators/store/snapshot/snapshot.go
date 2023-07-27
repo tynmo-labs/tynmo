@@ -7,10 +7,10 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/hashicorp/go-hclog"
 	"tynmo/types"
 	"tynmo/validators"
 	"tynmo/validators/store"
-	"github.com/hashicorp/go-hclog"
 )
 
 const (
