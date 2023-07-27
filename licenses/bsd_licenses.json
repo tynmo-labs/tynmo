@@ -1,0 +1,20 @@
+[,
+  {
+    "name": "libp2p/go-netroute",
+    "version": "v0.2.0",
+    "type": "BSD-3-Clause",
+    "path": "vendor/github.com/libp2p/go-netroute/LICENSE"
+  },
+  {
+    "name": "libp2p/go-sockaddr",
+    "version": "v0.0.2",
+    "type": "BSD-3-Clause",
+    "path": "vendor/github.com/libp2p/go-netroute/LICENSE"
+  },
+  {
+    "name": "pkg/errors",
+    "version": "v0.9.1",
+    "type": "BSD-2-Clause",
+    "path": "vendor/github.com/pkg/errors/LICENSE"
+  }
+]
