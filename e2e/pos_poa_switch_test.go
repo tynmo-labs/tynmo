@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"tynmo/consensus/tynmobft/fork"
-	ibftOp "tynmo/consensus/tynmobft/proto"
+	ibftOp "tynmo/consensus/proto"
 	"tynmo/crypto"
 	"tynmo/e2e/framework"
 	"tynmo/types"

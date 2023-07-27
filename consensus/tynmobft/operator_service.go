@@ -1,4 +1,4 @@
-package ibft
+package tynmobft
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	empty "google.golang.org/protobuf/types/known/emptypb"
-	"tynmo/consensus/ibft/signer"
 	"tynmo/consensus/proto"
+	"tynmo/consensus/tynmobft/signer"
 	"tynmo/crypto"
 	"tynmo/types"
 	"tynmo/validators"

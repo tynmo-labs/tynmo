@@ -7,7 +7,7 @@ config*.json
 bin/
 
 test-chain*
-tynmo*
+
 
 # Exclude the build .exe file from version control
 dist/

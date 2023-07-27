@@ -9,17 +9,17 @@ import (
 	"os"
 	"time"
 
-	"tynmo/chain"
-	"tynmo/command"
-	ibftOp "tynmo/consensus/tynmobft/proto"
-	"tynmo/helper/common"
-	"tynmo/server"
-	"tynmo/server/proto"
-	txpoolOp "tynmo/txpool/proto"
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"tynmo/chain"
+	"tynmo/command"
+	ibftOp "tynmo/consensus/proto"
+	"tynmo/helper/common"
+	"tynmo/server"
+	"tynmo/server/proto"
+	txpoolOp "tynmo/txpool/proto"
 )
 
 type ClientCloseResult struct {
@@ -126,7 +126,7 @@ func GetSystemClientConnection(address string) (
 
 // GetIBFTOperatorClientConnection returns the IBFT operator client connection
 func GetIBFTOperatorClientConnection(address string) (
-	ibftOp.IbftOperatorClient,
+	ibftOp.BftOperatorClient,
 	error,
 ) {
 	conn, err := GetGRPCConnection(address)
@@ -134,7 +134,7 @@ func GetIBFTOperatorClientConnection(address string) (
 		return nil, err
 	}
 
-	return ibftOp.NewIbftOperatorClient(conn), nil
+	return ibftOp.NewBftOperatorClient(conn), nil
 }
 
 // GetGRPCConnection returns a grpc client connection

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/spf13/cobra"
 	"tynmo/command"
 	"tynmo/command/helper"
 	"tynmo/helper/common"
 	txpoolProto "tynmo/txpool/proto"
+	"github.com/spf13/cobra"
 )
 
 func GetCommand() *cobra.Command {

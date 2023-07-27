@@ -9,11 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/any"
-	"github.com/stretchr/testify/assert"
-	"github.com/umbracle/ethgo"
-	"github.com/umbracle/ethgo/jsonrpc"
-	ibftOp "tynmo/consensus/tynmobft/proto"
+	ibftOp "tynmo/consensus/proto"
 	"tynmo/contracts/staking"
 	"tynmo/crypto"
 	"tynmo/e2e/framework"
@@ -21,6 +17,11 @@ import (
 	"tynmo/helper/tests"
 	txpoolOp "tynmo/txpool/proto"
 	"tynmo/types"
+
+	"github.com/golang/protobuf/ptypes/any"
+	"github.com/stretchr/testify/assert"
+	"github.com/umbracle/ethgo"
+	"github.com/umbracle/ethgo/jsonrpc"
 )
 
 // foundInValidatorSet is a helper function for searching through the passed in set for a specific

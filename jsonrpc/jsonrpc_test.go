@@ -6,11 +6,10 @@ import (
 	"net"
 	"testing"
 
+	"github.com/hashicorp/go-hclog"
+	"github.com/stretchr/testify/assert"
 	"tynmo/helper/tests"
 	"tynmo/versioning"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/hashicorp/go-hclog"
 )
 
 func TestHTTPServer(t *testing.T) {

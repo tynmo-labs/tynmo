@@ -29,7 +29,7 @@ import (
 	initCmd "tynmo/command/secrets/init"
 	"tynmo/command/server"
 	"tynmo/consensus/tynmobft/fork"
-	tynmobftOp "tynmo/consensus/tynmobft/proto"
+	tynmobftOp "tynmo/consensus/proto"
 	"tynmo/crypto"
 	stakingHelper "tynmo/helper/staking"
 	"tynmo/helper/tests"

@@ -1,4 +1,4 @@
-package ibft
+package tynmobft
 
 import (
 	"errors"
@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc"
 	"tynmo/blockchain"
 	"tynmo/consensus"
-	"tynmo/consensus/ibft/fork"
-	"tynmo/consensus/ibft/signer"
+	"tynmo/consensus/tynmobft/fork"
 	"tynmo/consensus/proto"
+	"tynmo/consensus/tynmobft/signer"
 	"tynmo/helper/progress"
 	"tynmo/network"
 	"tynmo/secrets"
@@ -92,6 +92,9 @@ type backendIBFT struct {
 
 	// Channels
 	closeCh chan struct{} // Channel for closing
+
+	// validatorsSnapshotCache
+	validatorsSnapshotCache *validatorsSnapshotCache
 }
 
 // Factory implements the base consensus Factory method
@@ -122,7 +125,7 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 		quorumSizeBlockNum = uint64(readBlockNum)
 	}
 
-	logger := params.Logger.Named("ibft")
+	logger := params.Logger.Named("tynmobft")
 
 	forkManager, err := fork.NewForkManager(
 		logger,
@@ -164,6 +167,9 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 		// Channels
 		closeCh: make(chan struct{}),
 	}
+
+	// Initialize validators snapshot cache
+	p.validatorsSnapshotCache = newValidatorsSnapshotCache(logger, p)
 
 	// Istanbul requires a different header hash function
 	p.SetHeaderHash()
