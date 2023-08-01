@@ -8,26 +8,28 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-hclog"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"tynmo/blockchain"
 	"tynmo/network"
 	"tynmo/network/event"
 	"tynmo/syncer/proto"
 	"tynmo/types"
-	"github.com/hashicorp/go-hclog"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (
-	SyncPeerClientLoggerName = "sync-peer-client"
-	statusTopicName          = "syncer/status/0.1"
-	defaultTimeoutForStatus  = 10 * time.Second
+	SyncPeerClientLoggerName   = "sync-peer-client"
+	SyncConfigClientLoggerName = "sync-config-client"
+	statusTopicName            = "syncer/status/0.1"
+	defaultTimeoutForStatus    = 10 * time.Second
 )
 
 type syncPeerClient struct {
 	logger     hclog.Logger // logger used for console logging
 	network    Network      // reference to the network module
 	blockchain Blockchain   // reference to the blockchain module
+	config     Config       // reference to the config
 
 	subscription           blockchain.Subscription // reference to the blockchain subscription
 	topic                  *network.Topic          // reference to the network topic

@@ -7,6 +7,7 @@ import (
 	"tynmo/network/grpc"
 	"tynmo/syncer/proto"
 	"tynmo/types"
+
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
@@ -19,16 +20,19 @@ type syncPeerService struct {
 
 	blockchain Blockchain       // reference to the blockchain module
 	network    Network          // reference to the network module
+	config     Config           // reference to the chain config
 	stream     *grpc.GrpcStream // reference to the grpc stream
 }
 
 func NewSyncPeerService(
 	network Network,
 	blockchain Blockchain,
+	config Config,
 ) SyncPeerService {
 	return &syncPeerService{
 		blockchain: blockchain,
 		network:    network,
+		config:     config,
 	}
 }
 
@@ -80,8 +84,11 @@ func (s *syncPeerService) GetStatus(
 	req *empty.Empty,
 ) (*proto.SyncPeerStatus, error) {
 	var number uint64
-	if header := s.blockchain.Header(); header != nil {
-		number = header.Number
+
+	if s.blockchain != nil {
+		if header := s.blockchain.Header(); header != nil {
+			number = header.Number
+		}
 	}
 
 	return &proto.SyncPeerStatus{
@@ -94,4 +101,18 @@ func toProtoBlock(block *types.Block) *proto.Block {
 	return &proto.Block{
 		Block: block.MarshalRLP(),
 	}
+}
+
+// GetInitConfig is a gRPC endpoint to return the chain config
+func (s *syncPeerService) GetInitConfig(
+	ctx context.Context,
+	req *proto.GetInitConfigRequest,
+) (*proto.InitConfig, error) {
+	content, err := s.config.Export()
+	if err != nil {
+		return nil, err
+	}
+	return &proto.InitConfig{
+		Content: content,
+	}, nil
 }

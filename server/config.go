@@ -32,7 +32,8 @@ type Config struct {
 	DataDir     string
 	RestoreFile *string
 
-	Seal bool
+	Seal     bool
+	NetStart bool
 
 	SecretsManager *secrets.SecretsManagerConfig
 

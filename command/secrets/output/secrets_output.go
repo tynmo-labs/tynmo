@@ -1,8 +1,8 @@
 package output
 
 import (
-	"tynmo/command"
 	"github.com/spf13/cobra"
+	"tynmo/command"
 )
 
 func GetCommand() *cobra.Command {

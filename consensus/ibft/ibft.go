@@ -149,6 +149,7 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 			params.Logger,
 			params.Network,
 			params.Blockchain,
+			params.Config.Chain,
 			time.Duration(params.BlockTime)*3*time.Second,
 		),
 		secretsManager: params.SecretsManager,

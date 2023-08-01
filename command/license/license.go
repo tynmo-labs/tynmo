@@ -2,9 +2,9 @@ package license
 
 import (
 	"tynmo/command"
-	"github.com/spf13/cobra"
-
 	"tynmo/licenses"
+
+	"github.com/spf13/cobra"
 )
 
 func GetCommand() *cobra.Command {

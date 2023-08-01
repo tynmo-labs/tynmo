@@ -1,17 +1,17 @@
-package server
+package start
 
 import (
 	"errors"
 	"net"
 
+	"github.com/hashicorp/go-hclog"
+	"github.com/multiformats/go-multiaddr"
 	"tynmo/chain"
-	"tynmo/command/server/config"
+	"tynmo/command/start/config"
 	"tynmo/network"
 	"tynmo/secrets"
 	"tynmo/server"
-
-	"github.com/hashicorp/go-hclog"
-	"github.com/multiformats/go-multiaddr"
+	"tynmo/validators"
 )
 
 const (
@@ -40,6 +40,9 @@ const (
 	corsOriginFlag               = "access-control-allow-origins"
 	logFileLocationFlag          = "log-to"
 	bootNodesFlag                = "boot-nodes"
+	premineFlag                  = "premine"
+	InitialRootFlag              = "initial-root"
+	ChainIdFlag                  = "chain-id"
 )
 
 // Flags that are deprecated, but need to be preserved for
@@ -89,6 +92,15 @@ type serverParams struct {
 	secretsConfig *secrets.SecretsManagerConfig
 
 	logFileLocation string
+
+	initialTrieRoot      string
+	bootnodes            []string
+	premine              []string
+	ibftValidatorsRaw    []string
+	rawIBFTValidatorType string
+	ibftValidatorType    validators.ValidatorType
+	ibftValidators       validators.Validators
+	chainID              uint64
 }
 
 func (p *serverParams) isMaxPeersSet() bool {
@@ -147,7 +159,7 @@ func (p *serverParams) setJSONLogFormat(jsonLogFormat bool) {
 func (p *serverParams) generateConfig() *server.Config {
 	return &server.Config{
 		Chain:    p.genesisConfig,
-		NetStart: false,
+		NetStart: true,
 		JSONRPC: &server.JSONRPC{
 			JSONRPCAddr:              p.jsonRPCAddress,
 			AccessControlAllowOrigin: p.corsAllowedOrigins,
@@ -169,6 +181,7 @@ func (p *serverParams) generateConfig() *server.Config {
 			MaxInboundPeers:  p.rawConfig.Network.MaxInboundPeers,
 			MaxOutboundPeers: p.rawConfig.Network.MaxOutboundPeers,
 			Chain:            p.genesisConfig,
+			BootNodes:        p.genesisConfig.Bootnodes,
 		},
 		DataDir:            p.rawConfig.DataDir,
 		Seal:               p.rawConfig.ShouldSeal,

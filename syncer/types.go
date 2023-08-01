@@ -7,14 +7,18 @@ import (
 
 	rawGrpc "google.golang.org/grpc"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+	"google.golang.org/protobuf/proto"
 	"tynmo/blockchain"
 	"tynmo/helper/progress"
 	"tynmo/network"
 	"tynmo/network/event"
 	"tynmo/types"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"google.golang.org/protobuf/proto"
 )
+
+type Config interface {
+	Export() ([]byte, error)
+}
 
 type Blockchain interface {
 	// SubscribeEvents subscribes new blockchain event
@@ -105,4 +109,6 @@ type SyncPeerClient interface {
 	DisablePublishingPeerStatus()
 	// EnablePublishingPeerStatus enables publishing status in syncer topic
 	EnablePublishingPeerStatus()
+	// GetInitConfig returns chain config from given peer
+	GetInitConfig(peer.ID) ([]byte, error)
 }

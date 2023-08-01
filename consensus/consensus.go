@@ -12,6 +12,7 @@ import (
 	"tynmo/state"
 	"tynmo/txpool"
 	"tynmo/types"
+
 	"github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
 )
@@ -51,6 +52,9 @@ type Config struct {
 
 	// Params are the params of the chain and the consensus
 	Params *chain.Params
+
+	// Params are the params of the chain and the consensus
+	Chain *chain.Chain
 
 	// Config defines specific configuration parameters for the consensus
 	Config map[string]interface{}

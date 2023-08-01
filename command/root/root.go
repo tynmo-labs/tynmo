@@ -13,10 +13,12 @@ import (
 	"tynmo/command/peers"
 	"tynmo/command/secrets"
 	"tynmo/command/server"
+	"tynmo/command/start"
 	"tynmo/command/status"
 	"tynmo/command/txpool"
 	"tynmo/command/version"
 	"tynmo/command/whitelist"
+
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +52,7 @@ func (rc *RootCommand) registerSubCommands() {
 		backup.GetCommand(),
 		genesis.GetCommand(),
 		server.GetCommand(),
+		start.GetCommand(),
 		whitelist.GetCommand(),
 		license.GetCommand(),
 	)

@@ -136,10 +136,6 @@ func (i *backendIBFT) IsProposerV0(id []byte, height, round uint64) bool {
 
 func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProposerSnapshot {
 	sprintHeightBase := GetSprint(height)
-	if activeSprintProposerSnapshot == nil {
-		return nil
-	}
-
 	if sprintHeightBase != 0 && activeSprintProposerSnapshot != nil && activeSprintProposerSnapshot.CurSprintHeightBase == sprintHeightBase {
 		return activeSprintProposerSnapshot
 	}
@@ -155,9 +151,6 @@ func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProp
 
 func (i *backendIBFT) IsProposer(id []byte, height, round uint64) bool {
 	asps := i.GetActiveSprintProposerSnapshot(height)
-	if asps == nil {
-		return false
-	}
 	ps := asps.GetProposerSnapshot(height)
 	if ps == nil {
 		i.logger.Error("failed to calculate the new proposer", "height", height)
