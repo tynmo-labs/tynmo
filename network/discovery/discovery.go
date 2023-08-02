@@ -8,12 +8,12 @@ import (
 
 	"tynmo/network/common"
 	"tynmo/network/event"
-	"github.com/hashicorp/go-hclog"
-	"github.com/libp2p/go-libp2p/core/network"
-
 	"tynmo/network/grpc"
 	"tynmo/network/proto"
+
+	"github.com/hashicorp/go-hclog"
 	kb "github.com/libp2p/go-libp2p-kbucket"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 

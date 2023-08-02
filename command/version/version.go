@@ -1,9 +1,9 @@
 package version
 
 import (
+	"github.com/spf13/cobra"
 	"tynmo/command"
 	"tynmo/versioning"
-	"github.com/spf13/cobra"
 )
 
 func GetCommand() *cobra.Command {

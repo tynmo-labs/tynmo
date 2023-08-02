@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/go-hclog"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"tynmo/helper/progress"
 	"tynmo/network/event"
 	"tynmo/types"
-	"github.com/hashicorp/go-hclog"
-	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 const (
 	syncerName  = "syncer"
 	syncerProto = "/syncer/0.2"
+	configProto = "/syncer/0.3"
 )
 
 var (
@@ -27,6 +28,7 @@ type syncer struct {
 	logger          hclog.Logger
 	blockchain      Blockchain
 	syncProgression Progression
+	config          Config
 
 	peerMap         *PeerMap
 	syncPeerService SyncPeerService
@@ -43,13 +45,15 @@ func NewSyncer(
 	logger hclog.Logger,
 	network Network,
 	blockchain Blockchain,
+	config Config,
 	blockTimeout time.Duration,
 ) Syncer {
 	return &syncer{
 		logger:          logger.Named(syncerName),
 		blockchain:      blockchain,
+		config:          config,
 		syncProgression: progress.NewProgressionWrapper(progress.ChainSyncBulk),
-		syncPeerService: NewSyncPeerService(network, blockchain),
+		syncPeerService: NewSyncPeerService(network, blockchain, config),
 		syncPeerClient:  NewSyncPeerClient(logger, network, blockchain),
 		blockTimeout:    blockTimeout,
 		newStatusCh:     make(chan struct{}),

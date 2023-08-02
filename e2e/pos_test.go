@@ -17,7 +17,6 @@ import (
 	"tynmo/helper/tests"
 	txpoolOp "tynmo/txpool/proto"
 	"tynmo/types"
-
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/ethgo"

@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
+
 	"tynmo/archive"
 	"tynmo/blockchain"
 	"tynmo/chain"
@@ -25,12 +26,14 @@ import (
 	"tynmo/helper/progress"
 	"tynmo/jsonrpc"
 	"tynmo/network"
+	netCommon "tynmo/network/common"
 	"tynmo/secrets"
 	"tynmo/server/proto"
 	"tynmo/state"
 	itrie "tynmo/state/immutable-trie"
 	"tynmo/state/runtime"
 	"tynmo/state/runtime/tracer"
+	"tynmo/syncer"
 	"tynmo/txpool"
 	"tynmo/types"
 )
@@ -173,6 +176,32 @@ func NewServer(config *Config) (*Server, error) {
 		m.network = network
 	}
 
+	if config.NetStart {
+		if err := m.network.Start(); err != nil {
+			return nil, err
+		}
+
+		if len(config.Network.BootNodes) == 0 {
+			return nil, fmt.Errorf("expect providing bootnodes config in start")
+		}
+		bootnode, err := netCommon.StringToAddrInfo(config.Network.BootNodes[0])
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bootnode %s: %w", config.Network.BootNodes[0], err)
+		}
+
+		configClt := syncer.NewInitConfigClient(logger, m.network, m.config.Chain)
+		content, err := configClt.GetInitConfig(bootnode.ID)
+		if err != nil {
+			return nil, err
+		}
+		chain, err := chain.ImportChain(content)
+		if err != nil {
+			return nil, err
+		}
+		m.config.Chain = chain
+		m.chain = chain
+	}
+
 	// start blockchain object
 	stateStorage, err := itrie.NewLevelDBStorage(filepath.Join(m.config.DataDir, "trie"), logger)
 	if err != nil {
@@ -258,8 +287,10 @@ func NewServer(config *Config) (*Server, error) {
 		return nil, err
 	}
 
-	if err := m.network.Start(); err != nil {
-		return nil, err
+	if !config.NetStart {
+		if err := m.network.Start(); err != nil {
+			return nil, err
+		}
 	}
 
 	// setup and start jsonrpc server
@@ -402,6 +433,7 @@ func (s *Server) setupConsensus() error {
 
 	config := &consensus.Config{
 		Params: s.config.Chain.Params,
+		Chain:  s.config.Chain,
 		Config: engineConfig,
 		Path:   filepath.Join(s.config.DataDir, "consensus"),
 	}

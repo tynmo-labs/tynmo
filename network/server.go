@@ -10,14 +10,12 @@ import (
 	"tynmo/network/common"
 	"tynmo/network/dial"
 	"tynmo/network/discovery"
-	"github.com/armon/go-metrics"
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/p2p/security/noise"
-	rawGrpc "google.golang.org/grpc"
-
 	peerEvent "tynmo/network/event"
 	"tynmo/secrets"
+
+	"github.com/armon/go-metrics"
 	"github.com/hashicorp/go-hclog"
+	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/event"
@@ -25,7 +23,9 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/multiformats/go-multiaddr"
+	rawGrpc "google.golang.org/grpc"
 )
 
 const (
@@ -328,7 +328,7 @@ func (s *Server) keepAliveMinimumPeerConnections() {
 			return
 		}
 
-		if s.numPeers() < MinimumPeerConnections {
+		if s.NumPeers() < MinimumPeerConnections {
 			if s.config.NoDiscover || !s.bootnodes.hasBootnodes() {
 				// dial unconnected peer
 				randPeer := s.GetRandomPeer()
@@ -429,7 +429,7 @@ func (s *Server) runDial() {
 }
 
 // numPeers returns the number of connected peers [Thread safe]
-func (s *Server) numPeers() int64 {
+func (s *Server) NumPeers() int64 {
 	s.peersLock.Lock()
 	defer s.peersLock.Unlock()
 

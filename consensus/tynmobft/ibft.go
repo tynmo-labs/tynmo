@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"tynmo/blockchain"
 	"tynmo/consensus"
-	"tynmo/consensus/tynmobft/fork"
 	"tynmo/consensus/proto"
+	"tynmo/consensus/tynmobft/fork"
 	"tynmo/consensus/tynmobft/signer"
 	"tynmo/helper/progress"
 	"tynmo/network"
@@ -152,6 +152,7 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 			params.Logger,
 			params.Network,
 			params.Blockchain,
+			params.Config.Chain,
 			time.Duration(params.BlockTime)*3*time.Second,
 		),
 		secretsManager: params.SecretsManager,

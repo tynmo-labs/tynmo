@@ -11,6 +11,8 @@ service SyncPeer {
   rpc GetBlocks(GetBlocksRequest) returns (stream Block);
   // Returns server's status
   rpc GetStatus(google.protobuf.Empty) returns (SyncPeerStatus);
+  // Returns config
+  rpc GetInitConfig(GetInitConfigRequest) returns (InitConfig);
 }
 
 // GetBlocksRequest is a request for GetBlocks
@@ -29,4 +31,12 @@ message Block {
 message SyncPeerStatus {
   // Latest block height
   uint64 number = 1;
+}
+
+message GetInitConfigRequest {
+  bytes addr_info = 1;
+}
+
+message InitConfig {
+  bytes content = 1;
 }

@@ -3,9 +3,9 @@ package status
 import (
 	"context"
 
-	"tynmo/command"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/spf13/cobra"
+	"tynmo/command"
 
 	"tynmo/command/helper"
 	"tynmo/server/proto"

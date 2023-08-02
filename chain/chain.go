@@ -9,6 +9,7 @@ import (
 
 	"tynmo/helper/hex"
 	"tynmo/types"
+
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -345,10 +346,10 @@ func ImportFromFile(filename string) (*Chain, error) {
 		return nil, err
 	}
 
-	return importChain(data)
+	return ImportChain(data)
 }
 
-func importChain(content []byte) (*Chain, error) {
+func ImportChain(content []byte) (*Chain, error) {
 	var chain *Chain
 
 	if err := json.Unmarshal(content, &chain); err != nil {
@@ -360,4 +361,8 @@ func importChain(content []byte) (*Chain, error) {
 	}
 
 	return chain, nil
+}
+
+func (c *Chain) Export() ([]byte, error) {
+	return json.Marshal(c)
 }

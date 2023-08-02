@@ -1,4 +1,4 @@
-package server
+package start
 
 import (
 	"errors"
@@ -6,16 +6,19 @@ import (
 	"math"
 	"net"
 
-	"tynmo/command/server/config"
-
-	"tynmo/network/common"
-
 	"tynmo/chain"
 	"tynmo/command/helper"
+	"tynmo/command/start/config"
+	"tynmo/consensus/ibft"
+	"tynmo/consensus/ibft/fork"
+	"tynmo/contracts/staking"
+	stakingHelper "tynmo/helper/staking"
 	"tynmo/network"
+	"tynmo/network/common"
 	"tynmo/secrets"
 	"tynmo/server"
 	"tynmo/types"
+	"tynmo/validators"
 )
 
 var (
@@ -35,6 +38,14 @@ func (p *serverParams) initConfigFromFile() error {
 }
 
 func (p *serverParams) initRawParams() error {
+	if err := p.initIBFTValidatorType(); err != nil {
+		return err
+	}
+
+	if err := p.setValidatorSetFromCli(); err != nil {
+		return err
+	}
+
 	if err := p.initBlockGasTarget(); err != nil {
 		return err
 	}
@@ -63,6 +74,94 @@ func (p *serverParams) initRawParams() error {
 	p.initLogFileLocation()
 
 	return p.initAddresses()
+}
+
+func (p *serverParams) initIBFTValidatorType() error {
+	var err error
+	if p.ibftValidatorType, err = validators.ParseValidatorType(p.rawIBFTValidatorType); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setValidatorSetFromCli sets validator set from cli command
+func (p *serverParams) setValidatorSetFromCli() error {
+	p.ibftValidators = validators.NewValidatorSetFromType(p.ibftValidatorType)
+	if len(p.ibftValidatorsRaw) == 0 {
+		return nil
+	}
+
+	newValidators, err := validators.ParseValidators(p.ibftValidatorType, p.ibftValidatorsRaw)
+	if err != nil {
+		return err
+	}
+
+	if err = p.ibftValidators.Merge(newValidators); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *serverParams) predeployStakingSC() (*chain.GenesisAccount, error) {
+	stakingAccount, predeployErr := stakingHelper.PredeployStakingSC(
+		p.ibftValidators,
+		stakingHelper.PredeployParams{
+			// MinValidatorCount: p.minNumValidators,
+			// MaxValidatorCount: p.maxNumValidators,
+		})
+	if predeployErr != nil {
+		return nil, predeployErr
+	}
+
+	return stakingAccount, nil
+}
+
+func (p *serverParams) initGenesisConfig() error {
+	chainConfig := &chain.Chain{
+		// Name: p.name,
+		Genesis: &chain.Genesis{
+			// GasLimit:   p.blockGasLimit,
+			Difficulty: 1,
+			Alloc:      map[types.Address]*chain.GenesisAccount{},
+			// ExtraData:  p.extraData,
+			// GasUsed:    command.DefaultGenesisGasUsed,
+		},
+		Params: &chain.Params{
+			ChainID: int(p.chainID),
+			Forks:   chain.AllForksEnabled,
+			Engine: map[string]interface{}{
+				string(server.IBFTConsensus): map[string]interface{}{
+					fork.KeyType:          fork.PoA, //fork.PoA
+					fork.KeyValidatorType: p.ibftValidatorType,
+					ibft.KeyEpochSize:     float64(100), //hard code
+				},
+			},
+		},
+		Bootnodes: p.bootnodes,
+	}
+
+	// Predeploy staking smart contract if needed
+	stakingAccount, err := p.predeployStakingSC()
+	if err != nil {
+		return err
+	}
+
+	chainConfig.Genesis.Alloc[staking.AddrStakingContract] = stakingAccount
+
+	if err := fillPremineMap(chainConfig.Genesis.Alloc, p.premine); err != nil {
+		return err
+	}
+
+	p.genesisConfig = chainConfig
+
+	// if block-gas-target flag is set override genesis.json value
+	if p.blockGasTarget != 0 {
+		p.genesisConfig.Params.BlockGasTarget = p.blockGasTarget
+	}
+
+	return nil
 }
 
 func (p *serverParams) initBlockTime() error {
@@ -110,27 +209,6 @@ func (p *serverParams) initSecretsConfig() error {
 		p.rawConfig.SecretsConfigPath,
 	); parseErr != nil {
 		return fmt.Errorf("unable to read secrets config file, %w", parseErr)
-	}
-
-	return nil
-}
-
-func (p *serverParams) initGenesisConfig() error {
-	if p.rawConfig.GenesisPath == "" {
-		p.genesisConfig = &chain.Chain{}
-		return nil
-	}
-	var parseErr error
-
-	if p.genesisConfig, parseErr = chain.Import(
-		p.rawConfig.GenesisPath,
-	); parseErr != nil {
-		return parseErr
-	}
-
-	// if block-gas-target flag is set override genesis.json value
-	if p.blockGasTarget != 0 {
-		p.genesisConfig.Params.BlockGasTarget = p.blockGasTarget
 	}
 
 	return nil
@@ -213,6 +291,7 @@ func (p *serverParams) initUsingMaxPeers() {
 }
 
 func (p *serverParams) initAddresses() error {
+
 	if err := p.initPrometheusAddress(); err != nil {
 		return err
 	}
