@@ -119,6 +119,10 @@ func stringToBytes(str string) []byte {
 	return b
 }
 
+func StringToBytes(str string) []byte {
+	return stringToBytes(str)
+}
+
 // UnmarshalText parses a hash in hex syntax.
 func (h *Hash) UnmarshalText(input []byte) error {
 	*h = BytesToHash(stringToBytes(string(input)))
