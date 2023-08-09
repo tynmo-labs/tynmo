@@ -9,6 +9,7 @@ import (
 	"tynmo/command/helper"
 	"tynmo/command/ibft"
 	"tynmo/command/license"
+	"tynmo/command/loadbot"
 	"tynmo/command/monitor"
 	"tynmo/command/peers"
 	"tynmo/command/secrets"
@@ -55,6 +56,7 @@ func (rc *RootCommand) registerSubCommands() {
 		server.GetCommand(),
 		start.GetCommand(),
 		whitelist.GetCommand(),
+		loadbot.GetCommand(),
 		license.GetCommand(),
 		tbft.GetCommand(),
 	)
