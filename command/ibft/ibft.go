@@ -9,9 +9,6 @@ import (
 	"tynmo/command/ibft/quorum"
 	"tynmo/command/ibft/snapshot"
 	"tynmo/command/ibft/status"
-	_switch "tynmo/command/ibft/switch"
-	"tynmo/command/tbft/staking"
-	"tynmo/command/tbft/unstaking"
 )
 
 func GetCommand() *cobra.Command {
@@ -38,11 +35,9 @@ func registerSubcommands(baseCmd *cobra.Command) {
 		// ibft candidates
 		candidates.GetCommand(),
 		// ibft switch
-		_switch.GetCommand(),
+		//_switch.GetCommand(),
 		// ibft quorum
 		quorum.GetCommand(),
 		add_validator.GetCommand(),
-		staking.GetCommand(),
-		unstaking.GetCommand(),
 	)
 }

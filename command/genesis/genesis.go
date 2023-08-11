@@ -126,13 +126,13 @@ func setFlags(cmd *cobra.Command) {
 
 	// PoS
 	{
-		cmd.Flags().BoolVar(
-			&params.isPos,
-			posFlag,
-			false,
-			"the flag indicating that the client should use Proof of Stake IBFT. Defaults to "+
-				"Proof of Authority if flag is not provided or false",
-		)
+		//cmd.Flags().BoolVar(
+		//	&params.isPos,
+		//	posFlag,
+		//	false,
+		//	"the flag indicating that the client should use Proof of Stake IBFT. Defaults to "+
+		//		"Proof of Authority if flag is not provided or false",
+		//)
 
 		cmd.Flags().Uint64Var(
 			&params.minNumValidators,
