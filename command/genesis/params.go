@@ -276,6 +276,7 @@ func (p *genesisParams) initConsensusEngineConfig() {
 		return
 	}
 
+	p.isPos = true
 	if p.isPos {
 		p.initIBFTEngineMap(p.consensus, fork.PoS)
 
