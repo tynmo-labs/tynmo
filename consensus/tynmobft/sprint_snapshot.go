@@ -18,6 +18,8 @@ var activeSprintProposerSnapshot *SprintProposerSnapshot = nil
 var (
 	errHeightSyncIncomplete = errors.New("height syncing is not complete, tolerate and wait")
 	errNoValidState         = errors.New("there is not valid local state")
+	errUnexpectedMap        = errors.New("unexpected snapshot map: can not find height")
+	errSyncSnapshotEmpty    = errors.New("snapshot sync result empty")
 )
 
 func GetSprint(height uint64) uint64 {
@@ -46,12 +48,24 @@ type ProposerSnapshot struct {
 	Validators []*PrioritizedValidator
 }
 
+type SpsStatusType uint
+
+const (
+	SpsStatusInit     SpsStatusType = iota // init
+	SpsStatusSynced                        // snapshot success synced from other peers
+	SpsStatusLoaded                        // snapshot success load from db
+	SpsStatusSyncNone                      // snapshot not in db and sync call success but result is nil, to calc
+	SpsStatusCalced                        // snapshot calculated
+)
+
 type SprintProposerSnapshot struct {
-	CurSprintHeightBase uint64
-	ProposerSnapshotMap map[uint64]*ProposerSnapshot // height -> *ProposerSnapshot
-	TotalVotingPower    *big.Int
-	Logger              hclog.Logger // Reference to the logging
-	backendConsensus    *backendIBFT
+	CurSprintHeightBase           uint64
+	ProposerSnapshotMap           map[uint64]*ProposerSnapshot // height -> *ProposerSnapshot
+	TotalVotingPower              *big.Int
+	Logger                        hclog.Logger // Reference to the logging
+	backendConsensus              *backendIBFT
+	Status                        SpsStatusType
+	PrioritizedValidatorAddresses []types.Address
 }
 
 func GetSprintProposerSnapshotResult(sps *SprintProposerSnapshot) *types.SprintProposerSnapshotResult {
@@ -94,6 +108,14 @@ func (sps *SprintProposerSnapshot) StoreSprintSnapshotResultToLocalState() error
 	return sps.backendConsensus.StoreSprintSnapshotResult(GetSprintProposerSnapshotResult(sps))
 }
 
+func (sps *SprintProposerSnapshot) LoadFromAddress() bool {
+	return sps.Status == SpsStatusLoaded || sps.Status == SpsStatusSynced
+}
+
+func (sps *SprintProposerSnapshot) CanCalc() bool {
+	return sps.Status != SpsStatusInit
+}
+
 func (sps *SprintProposerSnapshot) GetProposerAddress(height uint64, round uint64) (*types.Address, error) {
 	isSprintStart := IsSprintStart(height)
 	var err error = nil
@@ -101,36 +123,58 @@ func (sps *SprintProposerSnapshot) GetProposerAddress(height uint64, round uint6
 
 	// Early height syncing might not be complete yet, so check local state first and wait until syncing
 	// is done, before that just returns an error.
-	sprintSnapshotResult, err := sps.backendConsensus.GetSprintSnapshotResult()
-	if err == nil && sprintSnapshotResult != nil && sprintSnapshotResult.CurSprintHeightBase > height {
-		return nil, errHeightSyncIncomplete
+	if sps.Status == SpsStatusInit {
+		sprintSnapshotResult, err := sps.backendConsensus.GetSprintSnapshotResult()
+		if err != nil {
+			return nil, err
+		}
+		if sprintSnapshotResult != nil && sprintSnapshotResult.CurSprintHeightBase == GetSprint(height) && len(sprintSnapshotResult.PrioritizedValidatorAddresses) > 0 {
+			sps.Status = SpsStatusLoaded
+			sps.CurSprintHeightBase = sprintSnapshotResult.CurSprintHeightBase
+			sps.PrioritizedValidatorAddresses = sprintSnapshotResult.PrioritizedValidatorAddresses
+		} else {
+			sprintSnapshotResult, err = sps.backendConsensus.syncer.SyncSprintSnapshotOnce()
+			if err != nil {
+				return nil, err
+			}
+			if sprintSnapshotResult == nil || len(sprintSnapshotResult.PrioritizedValidatorAddresses) == 0 {
+				sps.Status = SpsStatusSyncNone
+			} else {
+				sps.Status = SpsStatusSynced
+				sps.CurSprintHeightBase = sprintSnapshotResult.CurSprintHeightBase
+				sps.PrioritizedValidatorAddresses = sprintSnapshotResult.PrioritizedValidatorAddresses
+			}
+		}
+	}
+
+	if sps.LoadFromAddress() {
+		if sps.CurSprintHeightBase >= GetSprint(height) {
+			return &sps.PrioritizedValidatorAddresses[addressIdx], nil
+		} else {
+			sps.Status = SpsStatusInit
+		}
 	}
 
 	// Calculate snapshot from stake contract
-	if isSprintStart {
+	if isSprintStart && sps.CanCalc() {
 		if len(sps.ProposerSnapshotMap) == 0 || sps.CurSprintHeightBase != GetSprint(height) {
-			sps.Logger.Debug("SnapshotMap empty, CalculateAll", "height", height)
+			sps.Logger.Info("SnapshotMap empty, CalculateAll", "height", height)
 			err = sps.CalculateAll(height)
 			if err != nil {
 				sps.Logger.Error("CalculateAll error", "error", err)
 				return nil, err
 			}
+			sps.Status = SpsStatusCalced
 			// Save the snapshot to local state store
 			sps.StoreSprintSnapshotResultToLocalState()
 		}
-		return &sps.ProposerSnapshotMap[addressIdx+sps.CurSprintHeightBase].Proposer.Metadata.Address, nil
 	}
 
-	// Read sprint snapshot from local state storage
-	if err == nil && sprintSnapshotResult != nil && sprintSnapshotResult.CurSprintHeightBase == GetSprint(height) {
-		sps.Logger.Debug("Succeeded to read validator addresses from local state")
-		return &sprintSnapshotResult.PrioritizedValidatorAddresses[addressIdx], nil
-	} else {
-		// Directly return the error and wait for the state syncing from peers
-		// If syncing succeeds, sprintSnapshotResult will contain for next few rounds
-		sps.Logger.Debug("Failed to read validator addresses from local state")
-		return nil, errNoValidState
+	snapshot, has := sps.ProposerSnapshotMap[addressIdx+sps.CurSprintHeightBase]
+	if has {
+		return &snapshot.Proposer.Metadata.Address, nil
 	}
+	return nil, errUnexpectedMap
 }
 
 func (sps *SprintProposerSnapshot) PreProposerSnapshot(height uint64) (*ProposerSnapshot, error) {

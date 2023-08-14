@@ -137,7 +137,7 @@ func (i *backendIBFT) IsProposerV0(id []byte, height, round uint64) bool {
 func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProposerSnapshot {
 	sprintHeightBase := GetSprint(height)
 
-	if sprintHeightBase != 0 && activeSprintProposerSnapshot != nil {
+	if activeSprintProposerSnapshot != nil {
 		return activeSprintProposerSnapshot
 	}
 
@@ -146,6 +146,7 @@ func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProp
 		ProposerSnapshotMap: make(map[uint64]*ProposerSnapshot),
 		Logger:              i.logger.Named("snapshot"),
 		backendConsensus:    i,
+		Status:              SpsStatusInit,
 	}
 
 	return activeSprintProposerSnapshot

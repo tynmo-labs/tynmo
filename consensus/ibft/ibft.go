@@ -654,3 +654,9 @@ func (i *backendIBFT) WaitPeerCount() int {
 	quorum := i.Quorum(height)
 	return int(quorum) - 1
 }
+
+func (i *backendIBFT) GetSprint(height uint64) uint64 { return 0 }
+
+func (i *backendIBFT) StoreSprintSnapshotResult(snapshot *types.SprintProposerSnapshotResult) error {
+	return nil
+}

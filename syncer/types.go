@@ -24,6 +24,8 @@ type Consensus interface {
 	WaitPeerCount() int
 	SprintHeightBase() uint64
 	GetSprintSnapshotResult() (*types.SprintProposerSnapshotResult, error)
+	GetSprint(uint64) uint64
+	StoreSprintSnapshotResult(snapshot *types.SprintProposerSnapshotResult) error
 }
 
 type Blockchain interface {
@@ -76,6 +78,8 @@ type Syncer interface {
 	Sync(func(*types.Block) bool) error
 	// SyncSprintSnapshot start routine to sync sprint snapshot
 	SyncSprintSnapshot(callback func(*types.SprintProposerSnapshotResult)) error
+
+	SyncSprintSnapshotOnce() (*types.SprintProposerSnapshotResult, error)
 }
 
 type Progression interface {

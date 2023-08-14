@@ -3,6 +3,7 @@ package syncer
 import (
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -39,6 +40,8 @@ type syncer struct {
 	// Timeout for syncing a block
 	blockTimeout time.Duration
 
+	sprintLocker SprintLocker
+
 	// Channel to notify Sync that a new status arrived
 	newStatusCh   chan struct{}
 	newSnapshotCh chan struct{}
@@ -65,6 +68,7 @@ func NewSyncer(
 		newSnapshotCh:   make(chan struct{}, 10),
 		peerMap:         new(PeerMap),
 		peerSnapshotMap: new(PeerMap),
+		sprintLocker:    SprintLocker{sprint: uint64(math.MaxUint64)},
 	}
 }
 

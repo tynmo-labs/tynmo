@@ -281,7 +281,7 @@ func (i *backendIBFT) Start() error {
 	go i.startSyncing()
 
 	// Start syncing sprint snapshots from other peers
-	go i.startSyncingSprintSnapshots()
+	// go i.startSyncingSprintSnapshots()
 
 	// Start the actual consensus protocol
 	go i.startConsensus()
@@ -699,4 +699,8 @@ func (i *backendIBFT) WaitPeerCount() int {
 	height := i.blockchain.Header().Number
 	quorum := i.Quorum(height)
 	return int(quorum) - 1
+}
+
+func (i *backendIBFT) GetSprint(height uint64) uint64 {
+	return height - height%SprintSize
 }
