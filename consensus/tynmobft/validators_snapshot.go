@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"tynmo/types"
+
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -13,13 +15,11 @@ const (
 	validatorSnapshotLimit = 100
 	// numberOfSnapshotsToLeaveInMemory defines a number of validator snapshots to leave in memory
 	numberOfSnapshotsToLeaveInMemory = 12
-	// SprintSize defines the length of heights to take a new snapshot from stake smart contract
-	SprintSize = 5
 )
 
 type validatorSnapshot struct {
-	Sprint   uint64     `json:"sprint"`
-	Snapshot AccountSet `json:"snapshot"`
+	Sprint   uint64           `json:"sprint"`
+	Snapshot types.AccountSet `json:"snapshot"`
 }
 
 func (vs *validatorSnapshot) copy() *validatorSnapshot {
@@ -50,7 +50,7 @@ func newValidatorsSnapshotCache(logger hclog.Logger, backendConsensus *backendIB
 // GetSnapshot tries to retrieve the most recent cached snapshot (if any) and
 // applies pending validator set deltas to it.
 // Otherwise, it builds a snapshot from scratch and applies pending validator set deltas.
-func (v *validatorsSnapshotCache) GetSnapshot(height uint64) (AccountSet, error) {
+func (v *validatorsSnapshotCache) GetSnapshot(height uint64) (types.AccountSet, error) {
 	v.lock.Lock()
 	defer v.lock.Unlock()
 
@@ -96,7 +96,7 @@ func (v *validatorsSnapshotCache) computeSnapshot(height uint64) (*validatorSnap
 
 	vs := validatorSnapshot{
 		Sprint:   GetSprint(height),
-		Snapshot: NewAccountSet(),
+		Snapshot: types.NewAccountSet(),
 	}
 
 	for idx := 0; idx < validators.Len(); idx++ {
@@ -105,7 +105,7 @@ func (v *validatorsSnapshotCache) computeSnapshot(height uint64) (*validatorSnap
 		v.logger.Debug("validatorsSnapshotCache: computeSnapshot:", "Validator: Type",
 			validator.Type(), "Address", validator.Addr().String(),
 			"Stake", validator.GetStake())
-		AppendAccountSet(&vs.Snapshot, NewValidatorMetadata(
+		types.AppendAccountSet(&vs.Snapshot, types.NewValidatorMetadata(
 			validator.Addr(), validator.GetStake(), true, true))
 	}
 

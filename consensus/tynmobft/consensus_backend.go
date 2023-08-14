@@ -424,3 +424,20 @@ func (i *backendIBFT) extractParentCommittedSeals(
 
 	return i.extractCommittedSeals(header)
 }
+
+func (i *backendIBFT) SprintHeightBase() uint64 {
+	height := i.blockchain.Header().Number
+	return GetSprint(height)
+}
+
+func (i *backendIBFT) GetAccountSet(height uint64) (types.AccountSet, error) {
+	return i.validatorsSnapshotCache.GetSnapshot(height)
+}
+
+func (i *backendIBFT) GetSprintSnapshotResult() (*types.SprintProposerSnapshotResult, error) {
+	return i.state.ProposerSnapshotStore.GetProposerSnapshotResult()
+}
+
+func (i *backendIBFT) StoreSprintSnapshotResult(snapshot *types.SprintProposerSnapshotResult) error {
+	return i.state.ProposerSnapshotStore.WriteProposerSnapshotResult(snapshot)
+}

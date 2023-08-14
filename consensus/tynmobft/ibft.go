@@ -3,6 +3,7 @@ package tynmobft
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"tynmo/blockchain"
@@ -32,6 +33,8 @@ const (
 
 	// consensusMetrics is a prefix used for consensus-related metrics
 	consensusMetrics = "consensus"
+
+	stateFileName = "consensusState.db"
 )
 
 var (
@@ -92,10 +95,14 @@ type backendIBFT struct {
 	blockTime          time.Duration // Minimum block generation time in seconds
 
 	// Channels
-	closeCh chan struct{} // Channel for closing
+	closeCh        chan struct{} // Channel for closing
+	initSnapshotCh chan struct{}
 
 	// validatorsSnapshotCache
 	validatorsSnapshotCache *validatorsSnapshotCache
+
+	// Local sprint snapshot storage
+	state *State
 }
 
 // Factory implements the base consensus Factory method
@@ -142,20 +149,19 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 		return nil, err
 	}
 
+	tmpCloseChannel := make(chan struct{})
+	stt, err := newState(filepath.Join(params.Config.Path, stateFileName), logger, tmpCloseChannel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create state instance. Error: %w", err)
+	}
+
 	p := &backendIBFT{
 		// References
-		logger:     logger,
-		blockchain: params.Blockchain,
-		network:    params.Network,
-		executor:   params.Executor,
-		txpool:     params.TxPool,
-		syncer: syncer.NewSyncer(
-			params.Logger,
-			params.Network,
-			params.Blockchain,
-			params.Config.Chain,
-			time.Duration(params.BlockTime)*3*time.Second,
-		),
+		logger:         logger,
+		blockchain:     params.Blockchain,
+		network:        params.Network,
+		executor:       params.Executor,
+		txpool:         params.TxPool,
 		secretsManager: params.SecretsManager,
 		Grpc:           params.Grpc,
 		forkManager:    forkManager,
@@ -167,8 +173,18 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 		blockTime:          time.Duration(params.BlockTime) * time.Second,
 
 		// Channels
-		closeCh: make(chan struct{}),
+		closeCh:        tmpCloseChannel,
+		initSnapshotCh: make(chan struct{}),
+		state:          stt,
 	}
+	p.syncer = syncer.NewSyncer(
+		params.Logger,
+		params.Network,
+		params.Blockchain,
+		p,
+		params.Config.Chain,
+		time.Duration(params.BlockTime)*3*time.Second,
+	)
 
 	// Initialize validators snapshot cache
 	p.validatorsSnapshotCache = newValidatorsSnapshotCache(logger, p)
@@ -237,6 +253,23 @@ func (i *backendIBFT) startSyncing() {
 	}
 }
 
+// startSyncingSprintSnapshots runs the syncer in the background to receive sprint snapshots from advanced peers
+func (i *backendIBFT) startSyncingSprintSnapshots() {
+	callSyncSprintSnapshotHook := func(result *types.SprintProposerSnapshotResult) {
+		if err := i.StoreSprintSnapshotResult(result); err != nil {
+			i.logger.Error("failed to call StoreSprintSnapshotResult", "error", err)
+		} else {
+			i.initSnapshotCh <- struct{}{}
+		}
+	}
+
+	if err := i.syncer.SyncSprintSnapshot(
+		callSyncSprintSnapshotHook,
+	); err != nil {
+		i.logger.Error("watch sync failed", "err", err)
+	}
+}
+
 // Start starts the IBFT consensus
 func (i *backendIBFT) Start() error {
 	// Start the syncer
@@ -246,6 +279,9 @@ func (i *backendIBFT) Start() error {
 
 	// Start syncing blocks from other peers
 	go i.startSyncing()
+
+	// Start syncing sprint snapshots from other peers
+	go i.startSyncingSprintSnapshots()
 
 	// Start the actual consensus protocol
 	go i.startConsensus()
@@ -321,12 +357,16 @@ func (i *backendIBFT) startConsensus() {
 				i.consensus.stopSequence()
 				i.logger.Info("canceled sequence", "sequence", pending)
 			}
+		case <-i.initSnapshotCh:
+			if isValidator {
+				i.consensus.stopSequence()
+				i.logger.Info("canceled sequence", "sequence", pending)
+			}
 		case <-sequenceCh:
 		case <-i.closeCh:
 			if isValidator {
 				i.consensus.stopSequence()
 			}
-
 			return
 		}
 	}
@@ -507,6 +547,7 @@ func (i *backendIBFT) IsLastOfEpoch(number uint64) bool {
 // Close closes the IBFT consensus mechanism, and does write back to disk
 func (i *backendIBFT) Close() error {
 	close(i.closeCh)
+	close(i.initSnapshotCh)
 
 	if i.syncer != nil {
 		if err := i.syncer.Close(); err != nil {
@@ -652,4 +693,10 @@ func (i *backendIBFT) ValidateExtraDataFormat(header *types.Header) error {
 	_, err = blockSigner.GetIBFTExtra(header)
 
 	return err
+}
+
+func (i *backendIBFT) WaitPeerCount() int {
+	height := i.blockchain.Header().Number
+	quorum := i.Quorum(height)
+	return int(quorum) - 1
 }

@@ -20,6 +20,12 @@ type Config interface {
 	Export() ([]byte, error)
 }
 
+type Consensus interface {
+	WaitPeerCount() int
+	SprintHeightBase() uint64
+	GetSprintSnapshotResult() (*types.SprintProposerSnapshotResult, error)
+}
+
 type Blockchain interface {
 	// SubscribeEvents subscribes new blockchain event
 	SubscribeEvents() blockchain.Subscription
@@ -68,6 +74,8 @@ type Syncer interface {
 	HasSyncPeer() bool
 	// Sync starts routine to sync blocks
 	Sync(func(*types.Block) bool) error
+	// SyncSprintSnapshot start routine to sync sprint snapshot
+	SyncSprintSnapshot(callback func(*types.SprintProposerSnapshotResult)) error
 }
 
 type Progression interface {
@@ -111,4 +119,6 @@ type SyncPeerClient interface {
 	EnablePublishingPeerStatus()
 	// GetInitConfig returns chain config from given peer
 	GetInitConfig(peer.ID) ([]byte, error)
+	// GetSnapshots returns a snapshot from given height to peer's latest
+	GetSprintSnapshot(peer.ID, time.Duration) (*PeerSprintSnapshot, error)
 }

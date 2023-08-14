@@ -1,4 +1,4 @@
-package tynmobft
+package types
 
 import (
 	"bytes"
@@ -7,62 +7,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"tynmo/consensus/tynmobft/bitmap"
-	"tynmo/types"
+	"tynmo/types/bitmap"
 )
-
-// ValidatorMetadata represents a validator metadata (its public identity)
-type ValidatorMetadata struct {
-	Address types.Address
-	//BlsKey      *bls.PublicKey
-	VotingPower *big.Int
-	IsActive    bool
-	IsSealer    bool
-}
-
-// Equals checks ValidatorMetadata equality
-func (v *ValidatorMetadata) Equals(b *ValidatorMetadata) bool {
-	if b == nil {
-		return false
-	}
-
-	return v.EqualAddress(b) && v.VotingPower.Cmp(b.VotingPower) == 0 && v.IsActive == b.IsActive
-}
-
-// EqualAddress checks ValidatorMetadata equality against Address and BlsKey fields
-func (v *ValidatorMetadata) EqualAddress(b *ValidatorMetadata) bool {
-	if b == nil {
-		return false
-	}
-
-	return v.Address == b.Address
-}
-
-// Copy returns a deep copy of ValidatorMetadata
-func (v *ValidatorMetadata) Copy() *ValidatorMetadata {
-	return &ValidatorMetadata{
-		Address:     types.BytesToAddress(v.Address[:]),
-		VotingPower: new(big.Int).Set(v.VotingPower),
-		IsActive:    v.IsActive,
-		IsSealer:    v.IsSealer,
-	}
-}
-
-// fmt.Stringer implementation
-func (v *ValidatorMetadata) String() string {
-	return fmt.Sprintf("Address=%v; Is Active=%v; Voting Power=%d;Is Sealer=%v;",
-		v.Address.String(), v.IsActive, v.VotingPower, v.IsSealer)
-}
-
-func NewValidatorMetadata(addr types.Address, vp *big.Int, isActive, isSealer bool) *ValidatorMetadata {
-
-	return &ValidatorMetadata{
-		Address:     addr,
-		VotingPower: vp,
-		IsActive:    isActive,
-		IsSealer:    isSealer,
-	}
-}
 
 // AccountSet is a type alias for slice of ValidatorMetadata instances
 type AccountSet []*ValidatorMetadata
@@ -97,8 +43,8 @@ func (as AccountSet) String() string {
 }
 
 // GetAddresses aggregates addresses for given AccountSet
-func (as AccountSet) GetAddresses() []types.Address {
-	res := make([]types.Address, 0, len(as))
+func (as AccountSet) GetAddresses() []Address {
+	res := make([]Address, 0, len(as))
 	for _, account := range as {
 		res = append(res, account.Address)
 	}
@@ -107,8 +53,8 @@ func (as AccountSet) GetAddresses() []types.Address {
 }
 
 // GetAddressesAsSet aggregates addresses as map for given AccountSet
-func (as AccountSet) GetAddressesAsSet() map[types.Address]struct{} {
-	res := make(map[types.Address]struct{}, len(as))
+func (as AccountSet) GetAddressesAsSet() map[Address]struct{} {
+	res := make(map[Address]struct{}, len(as))
 	for _, account := range as {
 		res[account.Address] = struct{}{}
 	}
@@ -133,13 +79,13 @@ func (as AccountSet) ContainsNodeID(nodeID string) bool {
 }
 
 // ContainsAddress checks whether ValidatorMetadata with given address is present in the AccountSet
-func (as AccountSet) ContainsAddress(address types.Address) bool {
+func (as AccountSet) ContainsAddress(address Address) bool {
 	return as.Index(address) != -1
 }
 
 // Index returns index of the given ValidatorMetadata, identified by address within the AccountSet.
 // If given ValidatorMetadata is not present, it returns -1.
-func (as AccountSet) Index(addr types.Address) int {
+func (as AccountSet) Index(addr Address) int {
 	for indx, validator := range as {
 		if validator.Address == addr {
 			return indx
@@ -161,7 +107,7 @@ func (as AccountSet) Copy() AccountSet {
 
 // GetValidatorMetadata tries to retrieve validator account metadata by given address from the account set.
 // It returns nil if such account is not found.
-func (as AccountSet) GetValidatorMetadata(address types.Address) *ValidatorMetadata {
+func (as AccountSet) GetValidatorMetadata(address Address) *ValidatorMetadata {
 	i := as.Index(address)
 	if i == -1 {
 		return nil

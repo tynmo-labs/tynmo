@@ -4,6 +4,8 @@ import (
 	"math/big"
 	"sync"
 
+	"tynmo/types"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -36,6 +38,15 @@ func NewPeerMap(peers []*NoForkPeer) *PeerMap {
 	return peerMap
 }
 
+func (m *PeerMap) NumPeers() int {
+	len := 0
+	m.Range(func(key, value interface{}) bool {
+		len++
+		return true
+	})
+	return len
+}
+
 func (m *PeerMap) Put(peers ...*NoForkPeer) {
 	for _, peer := range peers {
 		m.Store(peer.ID.String(), peer)
@@ -62,6 +73,39 @@ func (m *PeerMap) BestPeer(skipMap map[peer.ID]bool) *NoForkPeer {
 			bestPeer = peer
 		}
 
+		return true
+	})
+
+	return bestPeer
+}
+
+type PeerSprintSnapshot struct {
+	// identifier
+	ID     peer.ID
+	Result types.SprintProposerSnapshotResult
+}
+
+func (p *PeerSprintSnapshot) IsBetter(t *PeerSprintSnapshot) bool {
+	return p.Result.CurSprintHeightBase > t.Result.CurSprintHeightBase
+}
+
+func (m *PeerMap) PutSnapshots(snapshots ...*PeerSprintSnapshot) {
+	for _, snapshot := range snapshots {
+		m.Store(snapshot.ID.String(), snapshot)
+	}
+}
+
+// BestPeer returns the top of heap
+func (m *PeerMap) BestSnapshotPeer(skipMap map[peer.ID]bool) *PeerSprintSnapshot {
+	var bestPeer *PeerSprintSnapshot
+	m.Range(func(key, value interface{}) bool {
+		peer, _ := value.(*PeerSprintSnapshot)
+		if skipMap != nil && skipMap[peer.ID] {
+			return true
+		}
+		if bestPeer == nil || peer.IsBetter(bestPeer) {
+			bestPeer = peer
+		}
 		return true
 	})
 

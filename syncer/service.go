@@ -18,6 +18,7 @@ var (
 type syncPeerService struct {
 	proto.UnimplementedSyncPeerServer
 
+	consensus  Consensus        // reference to the consensus module
 	blockchain Blockchain       // reference to the blockchain module
 	network    Network          // reference to the network module
 	config     Config           // reference to the chain config
@@ -27,11 +28,13 @@ type syncPeerService struct {
 func NewSyncPeerService(
 	network Network,
 	blockchain Blockchain,
+	consensus Consensus,
 	config Config,
 ) SyncPeerService {
 	return &syncPeerService{
 		blockchain: blockchain,
 		network:    network,
+		consensus:  consensus,
 		config:     config,
 	}
 }
@@ -114,5 +117,25 @@ func (s *syncPeerService) GetInitConfig(
 	}
 	return &proto.InitConfig{
 		Content: content,
+	}, nil
+}
+
+// GetSprintSnapshot is a gRPC endpoint to return the latest sprint snapshot result
+func (s *syncPeerService) GetSprintSnapshot(
+	ctx context.Context,
+	req *empty.Empty,
+) (*proto.SprintSnapshot, error) {
+	snapshotResult, err := s.consensus.GetSprintSnapshotResult()
+	if err != nil {
+		return nil, err
+	}
+
+	addresses := make([][]byte, 0)
+	for _, snapshot := range snapshotResult.PrioritizedValidatorAddresses {
+		addresses = append(addresses, snapshot.Bytes())
+	}
+	return &proto.SprintSnapshot{
+		SprintHeight: snapshotResult.CurSprintHeightBase,
+		Addresses:    addresses,
 	}, nil
 }

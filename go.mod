@@ -59,7 +59,10 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
-require gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
+require (
+	go.etcd.io/bbolt v1.3.6
+	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
+)
 
 require (
 	cloud.google.com/go/compute v1.10.0 // indirect

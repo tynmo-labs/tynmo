@@ -424,3 +424,11 @@ func (i *backendIBFT) extractParentCommittedSeals(
 
 	return i.extractCommittedSeals(header)
 }
+
+func (i *backendIBFT) SprintHeightBase() uint64 {
+	return uint64(0)
+}
+
+func (i *backendIBFT) GetSprintSnapshotResult() (*types.SprintProposerSnapshotResult, error) {
+	return nil, nil
+}

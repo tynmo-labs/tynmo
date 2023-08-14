@@ -296,6 +296,39 @@ func (m *syncPeerClient) GetBlocks(
 	return blockCh, nil
 }
 
+// GetSprintSnapshot returns stream of the latest sprint snapshots
+func (m *syncPeerClient) GetSprintSnapshot(
+	peerID peer.ID,
+	timeoutPerBlock time.Duration,
+) (*PeerSprintSnapshot, error) {
+	clt, err := m.newSyncPeerClient(peerID)
+	if err != nil {
+		return nil, err
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), defaultTimeoutForStatus)
+	defer cancel()
+
+	snapshot, err := clt.GetSprintSnapshot(timeoutCtx, &emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	result := types.SprintProposerSnapshotResult{
+		CurSprintHeightBase: snapshot.GetSprintHeight(),
+	}
+
+	for _, addr := range snapshot.GetAddresses() {
+		newAddr := types.BytesToAddress(addr)
+		result.PrioritizedValidatorAddresses = append(result.PrioritizedValidatorAddresses, newAddr)
+	}
+
+	return &PeerSprintSnapshot{
+		ID:     peerID,
+		Result: result,
+	}, nil
+}
+
 // newSyncPeerClient creates gRPC client
 func (m *syncPeerClient) newSyncPeerClient(peerID peer.ID) (proto.SyncPeerClient, error) {
 	conn, err := m.network.NewProtoConnection(syncerProto, peerID)

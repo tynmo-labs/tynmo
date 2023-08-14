@@ -28,9 +28,11 @@ type syncer struct {
 	logger          hclog.Logger
 	blockchain      Blockchain
 	syncProgression Progression
+	consensus       Consensus
 	config          Config
 
 	peerMap         *PeerMap
+	peerSnapshotMap *PeerMap
 	syncPeerService SyncPeerService
 	syncPeerClient  SyncPeerClient
 
@@ -38,26 +40,31 @@ type syncer struct {
 	blockTimeout time.Duration
 
 	// Channel to notify Sync that a new status arrived
-	newStatusCh chan struct{}
+	newStatusCh   chan struct{}
+	newSnapshotCh chan struct{}
 }
 
 func NewSyncer(
 	logger hclog.Logger,
 	network Network,
 	blockchain Blockchain,
+	consensus Consensus,
 	config Config,
 	blockTimeout time.Duration,
 ) Syncer {
 	return &syncer{
 		logger:          logger.Named(syncerName),
 		blockchain:      blockchain,
+		consensus:       consensus,
 		config:          config,
 		syncProgression: progress.NewProgressionWrapper(progress.ChainSyncBulk),
-		syncPeerService: NewSyncPeerService(network, blockchain, config),
+		syncPeerService: NewSyncPeerService(network, blockchain, consensus, config),
 		syncPeerClient:  NewSyncPeerClient(logger, network, blockchain),
 		blockTimeout:    blockTimeout,
 		newStatusCh:     make(chan struct{}),
+		newSnapshotCh:   make(chan struct{}, 10),
 		peerMap:         new(PeerMap),
+		peerSnapshotMap: new(PeerMap),
 	}
 }
 
@@ -80,6 +87,7 @@ func (s *syncer) Start() error {
 // Close terminates goroutine processes
 func (s *syncer) Close() error {
 	close(s.newStatusCh)
+	close(s.newSnapshotCh)
 
 	if err := s.syncPeerService.Close(); err != nil {
 		return err
@@ -111,6 +119,7 @@ func (s *syncer) startPeerConnectionEventProcess() {
 		switch e.Type {
 		case event.PeerConnected:
 			go s.initNewPeerStatus(peerID)
+			go s.initNewPeerSnapshot(peerID)
 		case event.PeerDisconnected:
 			s.removeFromPeerMap(peerID)
 		}

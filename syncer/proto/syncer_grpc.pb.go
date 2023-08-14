@@ -20,9 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SyncPeer_GetBlocks_FullMethodName     = "/v1.SyncPeer/GetBlocks"
-	SyncPeer_GetStatus_FullMethodName     = "/v1.SyncPeer/GetStatus"
-	SyncPeer_GetInitConfig_FullMethodName = "/v1.SyncPeer/GetInitConfig"
+	SyncPeer_GetBlocks_FullMethodName         = "/v1.SyncPeer/GetBlocks"
+	SyncPeer_GetStatus_FullMethodName         = "/v1.SyncPeer/GetStatus"
+	SyncPeer_GetInitConfig_FullMethodName     = "/v1.SyncPeer/GetInitConfig"
+	SyncPeer_GetSprintSnapshot_FullMethodName = "/v1.SyncPeer/GetSprintSnapshot"
 )
 
 // SyncPeerClient is the client API for SyncPeer service.
@@ -35,6 +36,8 @@ type SyncPeerClient interface {
 	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SyncPeerStatus, error)
 	// Returns config
 	GetInitConfig(ctx context.Context, in *GetInitConfigRequest, opts ...grpc.CallOption) (*InitConfig, error)
+	// Returns stream of the latest sprint snapshot
+	GetSprintSnapshot(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SprintSnapshot, error)
 }
 
 type syncPeerClient struct {
@@ -95,6 +98,15 @@ func (c *syncPeerClient) GetInitConfig(ctx context.Context, in *GetInitConfigReq
 	return out, nil
 }
 
+func (c *syncPeerClient) GetSprintSnapshot(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SprintSnapshot, error) {
+	out := new(SprintSnapshot)
+	err := c.cc.Invoke(ctx, SyncPeer_GetSprintSnapshot_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SyncPeerServer is the server API for SyncPeer service.
 // All implementations must embed UnimplementedSyncPeerServer
 // for forward compatibility
@@ -105,6 +117,8 @@ type SyncPeerServer interface {
 	GetStatus(context.Context, *emptypb.Empty) (*SyncPeerStatus, error)
 	// Returns config
 	GetInitConfig(context.Context, *GetInitConfigRequest) (*InitConfig, error)
+	// Returns stream of the latest sprint snapshot
+	GetSprintSnapshot(context.Context, *emptypb.Empty) (*SprintSnapshot, error)
 	mustEmbedUnimplementedSyncPeerServer()
 }
 
@@ -120,6 +134,9 @@ func (UnimplementedSyncPeerServer) GetStatus(context.Context, *emptypb.Empty) (*
 }
 func (UnimplementedSyncPeerServer) GetInitConfig(context.Context, *GetInitConfigRequest) (*InitConfig, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInitConfig not implemented")
+}
+func (UnimplementedSyncPeerServer) GetSprintSnapshot(context.Context, *emptypb.Empty) (*SprintSnapshot, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSprintSnapshot not implemented")
 }
 func (UnimplementedSyncPeerServer) mustEmbedUnimplementedSyncPeerServer() {}
 
@@ -191,6 +208,24 @@ func _SyncPeer_GetInitConfig_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SyncPeer_GetSprintSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SyncPeerServer).GetSprintSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SyncPeer_GetSprintSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SyncPeerServer).GetSprintSnapshot(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SyncPeer_ServiceDesc is the grpc.ServiceDesc for SyncPeer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -205,6 +240,10 @@ var SyncPeer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInitConfig",
 			Handler:    _SyncPeer_GetInitConfig_Handler,
+		},
+		{
+			MethodName: "GetSprintSnapshot",
+			Handler:    _SyncPeer_GetSprintSnapshot_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

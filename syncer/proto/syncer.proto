@@ -13,6 +13,8 @@ service SyncPeer {
   rpc GetStatus(google.protobuf.Empty) returns (SyncPeerStatus);
   // Returns config
   rpc GetInitConfig(GetInitConfigRequest) returns (InitConfig);
+  // Returns stream of the latest sprint snapshot
+  rpc GetSprintSnapshot(google.protobuf.Empty) returns (SprintSnapshot);
 }
 
 // GetBlocksRequest is a request for GetBlocks
@@ -39,4 +41,10 @@ message GetInitConfigRequest {
 
 message InitConfig {
   bytes content = 1;
+}
+
+// SprintSnapshot contains a sprint snapshot data
+message SprintSnapshot {
+  uint64 sprint_height = 1;
+  repeated bytes addresses = 2;
 }

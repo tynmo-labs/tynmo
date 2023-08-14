@@ -188,3 +188,29 @@ func (t *Transaction) MarshalRLPWith(arena *fastrlp.Arena) *fastrlp.Value {
 
 	return vv
 }
+
+func (sps *SprintProposerSnapshotResult) MarshalRLP() []byte {
+	return sps.MarshalRLPTo(nil)
+}
+
+func (sps *SprintProposerSnapshotResult) MarshalRLPTo(dst []byte) []byte {
+	return MarshalRLPTo(sps.MarshalRLPWith, dst)
+}
+
+func (sps *SprintProposerSnapshotResult) MarshalRLPWith(ar *fastrlp.Arena) *fastrlp.Value {
+	vv := ar.NewArray()
+
+	vv.Set(ar.NewUint(sps.CurSprintHeightBase))
+
+	if len(sps.PrioritizedValidatorAddresses) == 0 {
+		vv.Set(ar.NewNullArray())
+	} else {
+		v0 := ar.NewArray()
+		for _, addr := range sps.PrioritizedValidatorAddresses {
+			v0.Set(ar.NewBytes(addr.Bytes()))
+		}
+		vv.Set(v0)
+	}
+
+	return vv
+}

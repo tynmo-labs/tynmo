@@ -136,13 +136,15 @@ func (i *backendIBFT) IsProposerV0(id []byte, height, round uint64) bool {
 
 func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProposerSnapshot {
 	sprintHeightBase := GetSprint(height)
-	if sprintHeightBase != 0 && activeSprintProposerSnapshot != nil && activeSprintProposerSnapshot.CurSprintHeightBase == sprintHeightBase {
+
+	if sprintHeightBase != 0 && activeSprintProposerSnapshot != nil {
 		return activeSprintProposerSnapshot
 	}
 
 	activeSprintProposerSnapshot = &SprintProposerSnapshot{
 		CurSprintHeightBase: sprintHeightBase,
 		ProposerSnapshotMap: make(map[uint64]*ProposerSnapshot),
+		Logger:              i.logger.Named("snapshot"),
 		backendConsensus:    i,
 	}
 
@@ -151,12 +153,12 @@ func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProp
 
 func (i *backendIBFT) IsProposer(id []byte, height, round uint64) bool {
 	asps := i.GetActiveSprintProposerSnapshot(height)
-	ps := asps.GetProposerSnapshot(height)
-	if ps == nil {
-		i.logger.Error("failed to calculate the new proposer", "height", height)
+	address, err := asps.GetProposerAddress(height, round)
+	if err != nil {
+		i.logger.Error("failed to calculate the new proposer", "height", height, "error", err)
 		return false
 	}
-	return types.BytesToAddress(id) == ps.Proposer.Metadata.Address
+	return types.BytesToAddress(id) == *address
 }
 
 func (i *backendIBFT) IsValidProposalHash(proposal, hash []byte) bool {

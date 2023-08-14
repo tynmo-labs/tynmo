@@ -141,18 +141,11 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 
 	p := &backendIBFT{
 		// References
-		logger:     logger,
-		blockchain: params.Blockchain,
-		network:    params.Network,
-		executor:   params.Executor,
-		txpool:     params.TxPool,
-		syncer: syncer.NewSyncer(
-			params.Logger,
-			params.Network,
-			params.Blockchain,
-			params.Config.Chain,
-			time.Duration(params.BlockTime)*3*time.Second,
-		),
+		logger:         logger,
+		blockchain:     params.Blockchain,
+		network:        params.Network,
+		executor:       params.Executor,
+		txpool:         params.TxPool,
 		secretsManager: params.SecretsManager,
 		Grpc:           params.Grpc,
 		forkManager:    forkManager,
@@ -166,6 +159,14 @@ func Factory(params *consensus.Params) (consensus.Consensus, error) {
 		// Channels
 		closeCh: make(chan struct{}),
 	}
+	p.syncer = syncer.NewSyncer(
+		params.Logger,
+		params.Network,
+		params.Blockchain,
+		p,
+		params.Config.Chain,
+		time.Duration(params.BlockTime)*3*time.Second,
+	)
 
 	// Istanbul requires a different header hash function
 	p.SetHeaderHash()
@@ -646,4 +647,10 @@ func (i *backendIBFT) ValidateExtraDataFormat(header *types.Header) error {
 	_, err = blockSigner.GetIBFTExtra(header)
 
 	return err
+}
+
+func (i *backendIBFT) WaitPeerCount() int {
+	height := i.blockchain.Header().Number
+	quorum := i.Quorum(height)
+	return int(quorum) - 1
 }
