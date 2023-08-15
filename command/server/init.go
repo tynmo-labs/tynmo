@@ -6,13 +6,11 @@ import (
 	"math"
 	"net"
 
-	"tynmo/command/server/config"
-
-	"tynmo/network/common"
-
 	"tynmo/chain"
 	"tynmo/command/helper"
+	"tynmo/command/server/config"
 	"tynmo/network"
+	"tynmo/network/common"
 	"tynmo/secrets"
 	"tynmo/server"
 	"tynmo/types"

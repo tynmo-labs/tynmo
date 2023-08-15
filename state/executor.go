@@ -13,6 +13,7 @@ import (
 	"tynmo/state/runtime/precompiled"
 	"tynmo/state/runtime/tracer"
 	"tynmo/types"
+
 	"github.com/hashicorp/go-hclog"
 )
 

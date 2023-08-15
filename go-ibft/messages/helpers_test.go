@@ -3,7 +3,8 @@ package messages
 import (
 	"testing"
 
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages/proto"
+
 	"github.com/stretchr/testify/assert"
 )
 

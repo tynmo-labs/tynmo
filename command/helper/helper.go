@@ -10,10 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ryanuber/columnize"
-	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"tynmo/chain"
 	"tynmo/command"
 	ibftOp "tynmo/consensus/proto"
@@ -21,6 +17,11 @@ import (
 	"tynmo/server"
 	"tynmo/server/proto"
 	txpoolOp "tynmo/txpool/proto"
+
+	"github.com/ryanuber/columnize"
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type ClientCloseResult struct {

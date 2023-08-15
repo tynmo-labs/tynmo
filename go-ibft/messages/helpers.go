@@ -3,7 +3,7 @@ package messages
 import (
 	"bytes"
 
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages/proto"
 )
 
 type CommittedSeal struct {

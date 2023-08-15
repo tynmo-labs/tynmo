@@ -7,15 +7,14 @@ import (
 	"reflect"
 	"testing"
 
-	"tynmo/state"
-	"github.com/hashicorp/go-hclog"
-
-	"tynmo/chain"
-	"github.com/stretchr/testify/assert"
-
 	"tynmo/blockchain/storage"
 	"tynmo/blockchain/storage/memory"
+	"tynmo/chain"
+	"tynmo/state"
 	"tynmo/types"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGenesis(t *testing.T) {

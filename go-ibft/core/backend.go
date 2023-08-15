@@ -1,8 +1,8 @@
 package core
 
 import (
-	"go-ibft/messages"
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages"
+	"tynmo/go-ibft/messages/proto"
 )
 
 // MessageConstructor defines a message constructor interface

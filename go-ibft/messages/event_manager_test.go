@@ -1,9 +1,11 @@
 package messages
 
 import (
-	"go-ibft/messages/proto"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"tynmo/go-ibft/messages/proto"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEventManager_SubscribeCancel(t *testing.T) {

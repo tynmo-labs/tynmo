@@ -1,6 +1,6 @@
 package core
 
-import "go-ibft/messages/proto"
+import "tynmo/go-ibft/messages/proto"
 
 // Transport defines an interface
 // the node uses to communicate with other peers

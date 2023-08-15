@@ -8,10 +8,10 @@ import (
 
 	"tynmo/consensus"
 	"tynmo/consensus/tynmobft/signer"
+	"tynmo/go-ibft/messages"
 	"tynmo/helper/hex"
 	"tynmo/state"
 	"tynmo/types"
-	"go-ibft/messages"
 )
 
 func (i *backendIBFT) BuildProposal(blockNumber uint64) []byte {

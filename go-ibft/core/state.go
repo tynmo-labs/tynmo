@@ -3,8 +3,8 @@ package core
 import (
 	"sync"
 
-	"go-ibft/messages"
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages"
+	"tynmo/go-ibft/messages/proto"
 )
 
 type stateType uint8

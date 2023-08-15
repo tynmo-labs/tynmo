@@ -13,6 +13,7 @@ import (
 	"tynmo/state"
 	"tynmo/txpool/proto"
 	"tynmo/types"
+
 	"github.com/armon/go-metrics"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/hashicorp/go-hclog"

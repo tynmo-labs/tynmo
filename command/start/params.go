@@ -4,14 +4,15 @@ import (
 	"errors"
 	"net"
 
-	"github.com/hashicorp/go-hclog"
-	"github.com/multiformats/go-multiaddr"
 	"tynmo/chain"
 	"tynmo/command/start/config"
 	"tynmo/network"
 	"tynmo/secrets"
 	"tynmo/server"
 	"tynmo/validators"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/multiformats/go-multiaddr"
 )
 
 const (

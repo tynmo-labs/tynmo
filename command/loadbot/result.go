@@ -6,11 +6,11 @@ import (
 	"math"
 	"sort"
 
-	"github.com/umbracle/ethgo"
-
 	"tynmo/command/helper"
 	"tynmo/command/loadbot/generator"
 	"tynmo/helper/common"
+
+	"github.com/umbracle/ethgo"
 )
 
 const (

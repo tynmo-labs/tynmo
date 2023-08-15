@@ -7,13 +7,12 @@ import (
 	"testing"
 
 	"tynmo/blockchain/storage"
-
 	"tynmo/chain"
 	"tynmo/state"
 	itrie "tynmo/state/immutable-trie"
-	"github.com/hashicorp/go-hclog"
-
 	"tynmo/types"
+
+	"github.com/hashicorp/go-hclog"
 )
 
 var (

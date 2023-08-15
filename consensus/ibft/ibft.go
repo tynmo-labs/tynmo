@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/armon/go-metrics"
-	"github.com/hashicorp/go-hclog"
-	"google.golang.org/grpc"
 	"tynmo/blockchain"
 	"tynmo/consensus"
 	"tynmo/consensus/ibft/fork"
@@ -20,6 +17,10 @@ import (
 	"tynmo/syncer"
 	"tynmo/types"
 	"tynmo/validators"
+
+	"github.com/armon/go-metrics"
+	"github.com/hashicorp/go-hclog"
+	"google.golang.org/grpc"
 )
 
 const (

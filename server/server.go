@@ -89,7 +89,7 @@ func newFileLogger(config *Config) (hclog.Logger, error) {
 	}
 
 	return hclog.New(&hclog.LoggerOptions{
-		Name:       "tynmo",
+		Name:       "Tynmo",
 		Level:      config.LogLevel,
 		Output:     logFileWriter,
 		JSONFormat: config.JSONLogFormat,
@@ -99,7 +99,7 @@ func newFileLogger(config *Config) (hclog.Logger, error) {
 // newCLILogger returns minimal logger instance that sends all logs to standard output
 func newCLILogger(config *Config) hclog.Logger {
 	return hclog.New(&hclog.LoggerOptions{
-		Name:       "tynmo",
+		Name:       "Tynmo",
 		Level:      config.LogLevel,
 		JSONFormat: config.JSONLogFormat,
 	})

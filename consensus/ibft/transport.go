@@ -1,9 +1,10 @@
 package ibft
 
 import (
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages/proto"
 	"tynmo/network"
 	"tynmo/types"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 

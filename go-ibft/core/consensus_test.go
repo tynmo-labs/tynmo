@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"go-ibft/messages"
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages"
+	"tynmo/go-ibft/messages/proto"
+
 	"github.com/stretchr/testify/assert"
 )
 

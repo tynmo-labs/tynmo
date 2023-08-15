@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"go-ibft/core"
+	"tynmo/go-ibft/core"
 )
 
 // IBFTConsensus is a convenience wrapper for the go-ibft package

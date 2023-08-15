@@ -3,7 +3,7 @@ package ibft
 import (
 	"google.golang.org/protobuf/proto"
 
-	protoIBFT "go-ibft/messages/proto"
+	protoIBFT "tynmo/go-ibft/messages/proto"
 	"tynmo/types"
 )
 

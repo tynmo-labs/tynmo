@@ -1,11 +1,13 @@
 package messages
 
 import (
-	"go-ibft/messages/proto"
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
 	"time"
+
+	"tynmo/go-ibft/messages/proto"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // generateRandomMessages generates random messages for the

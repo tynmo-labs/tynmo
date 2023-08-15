@@ -3,7 +3,7 @@ package messages
 import (
 	"sync"
 
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages/proto"
 )
 
 // Messages contains the relevant messages for each view (height, round)

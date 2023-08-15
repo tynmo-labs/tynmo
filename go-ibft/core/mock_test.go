@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"go-ibft/messages"
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages"
+	"tynmo/go-ibft/messages/proto"
 )
 
 // Define delegation methods

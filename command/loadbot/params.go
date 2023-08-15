@@ -6,9 +6,10 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/umbracle/ethgo/abi"
 	"tynmo/command/loadbot/generator"
 	"tynmo/types"
+
+	"github.com/umbracle/ethgo/abi"
 )
 
 var (

@@ -3,12 +3,12 @@ package status
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/spf13/cobra"
 	"tynmo/command"
-
 	"tynmo/command/helper"
 	"tynmo/server/proto"
+
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/spf13/cobra"
 )
 
 func GetCommand() *cobra.Command {

@@ -5,15 +5,15 @@ import (
 	"math/big"
 	"time"
 
-	rawGrpc "google.golang.org/grpc"
-
-	"github.com/libp2p/go-libp2p/core/peer"
-	"google.golang.org/protobuf/proto"
 	"tynmo/blockchain"
 	"tynmo/helper/progress"
 	"tynmo/network"
 	"tynmo/network/event"
 	"tynmo/types"
+
+	"github.com/libp2p/go-libp2p/core/peer"
+	rawGrpc "google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type Config interface {

@@ -1,10 +1,12 @@
 package contractsapi
 
 import (
+	"math/big"
+
 	"tynmo/contracts/abis"
 	"tynmo/types"
+
 	"github.com/umbracle/ethgo/abi"
-	"math/big"
 )
 
 const (

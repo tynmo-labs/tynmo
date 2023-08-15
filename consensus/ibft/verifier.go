@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 
-	"go-ibft/messages"
-	protoIBFT "go-ibft/messages/proto"
+	"tynmo/go-ibft/messages"
+	protoIBFT "tynmo/go-ibft/messages/proto"
 	"tynmo/types"
 )
 

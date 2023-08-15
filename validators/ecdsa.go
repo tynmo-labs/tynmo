@@ -3,7 +3,9 @@ package validators
 import (
 	"fmt"
 	"math/big"
+
 	"tynmo/types"
+
 	"github.com/umbracle/fastrlp"
 )
 

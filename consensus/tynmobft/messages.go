@@ -1,10 +1,10 @@
 package tynmobft
 
 import (
-	"google.golang.org/protobuf/proto"
-
+	protoIBFT "tynmo/go-ibft/messages/proto"
 	"tynmo/types"
-	protoIBFT "go-ibft/messages/proto"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func (i *backendIBFT) signMessage(msg *protoIBFT.Message) *protoIBFT.Message {

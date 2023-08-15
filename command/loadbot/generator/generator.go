@@ -6,9 +6,10 @@ import (
 	"math/big"
 	"os"
 
+	"tynmo/types"
+
 	"github.com/umbracle/ethgo"
 	"github.com/umbracle/ethgo/abi"
-	"tynmo/types"
 )
 
 type TransactionGenerator interface {

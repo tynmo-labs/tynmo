@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	empty "google.golang.org/protobuf/types/known/emptypb"
 	"tynmo/consensus/proto"
 	"tynmo/consensus/tynmobft/signer"
 	"tynmo/crypto"
 	"tynmo/types"
 	"tynmo/validators"
 	"tynmo/validators/store"
+
+	empty "google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (

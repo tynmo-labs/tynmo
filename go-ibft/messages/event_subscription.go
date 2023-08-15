@@ -1,7 +1,7 @@
 package messages
 
 import (
-	"go-ibft/messages/proto"
+	"tynmo/go-ibft/messages/proto"
 )
 
 type eventSubscription struct {

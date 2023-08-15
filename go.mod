@@ -59,10 +59,7 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
-require (
-	go-ibft v0.0.0-00010101000000-000000000000
-	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
-)
+require gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
 
 require (
 	cloud.google.com/go/compute v1.10.0 // indirect
@@ -203,5 +200,3 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	inet.af/netaddr v0.0.0-20220617031823-097006376321 // indirect
 )
-
-replace go-ibft => ./go-ibft

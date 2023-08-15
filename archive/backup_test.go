@@ -9,6 +9,7 @@ import (
 
 	"tynmo/server/proto"
 	"tynmo/types"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"

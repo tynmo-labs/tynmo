@@ -1,9 +1,10 @@
 package whitelist
 
 import (
-	"github.com/spf13/cobra"
 	"tynmo/command/whitelist/deployment"
 	"tynmo/command/whitelist/show"
+
+	"github.com/spf13/cobra"
 )
 
 func GetCommand() *cobra.Command {
