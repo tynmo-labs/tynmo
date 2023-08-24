@@ -6,7 +6,7 @@ import (
 )
 
 type ShowResult struct {
-	Whitelists Whitelists
+	Allowlists Allowlists
 }
 
 func (r *ShowResult) GetOutput() string {
@@ -14,7 +14,7 @@ func (r *ShowResult) GetOutput() string {
 
 	buffer.WriteString("\n[WHITELISTS]\n\n")
 
-	buffer.WriteString(fmt.Sprintf("Contract deployment whitelist : %s,\n", r.Whitelists.deployment))
+	buffer.WriteString(fmt.Sprintf("Contract deployment allowlist : %s,\n", r.Allowlists.deployment))
 
 	return buffer.String()
 }

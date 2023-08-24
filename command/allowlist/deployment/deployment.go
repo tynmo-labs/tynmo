@@ -10,7 +10,7 @@ import (
 func GetCommand() *cobra.Command {
 	deploymentCmd := &cobra.Command{
 		Use:     "deployment",
-		Short:   "Top level command for updating smart contract deployment whitelist. Only accepts subcommands",
+		Short:   "Top level command for updating smart contract deployment allowlist. Only accepts subcommands",
 		PreRunE: runPreRun,
 		Run:     runCommand,
 	}
@@ -31,14 +31,14 @@ func setFlags(cmd *cobra.Command) {
 		&params.addAddressRaw,
 		addAddressFlag,
 		[]string{},
-		"adds a new address to the contract deployment whitelist",
+		"adds a new address to the contract deployment allowlist",
 	)
 
 	cmd.Flags().StringArrayVar(
 		&params.removeAddressRaw,
 		removeAddressFlag,
 		[]string{},
-		"removes a new address from the contract deployment whitelist",
+		"removes a new address from the contract deployment allowlist",
 	)
 }
 

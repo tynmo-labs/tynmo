@@ -34,8 +34,8 @@ type deploymentParams struct {
 	genesisPath   string
 	genesisConfig *chain.Chain
 
-	// deployment whitelist from genesis configuration
-	whitelist []types.Address
+	// deployment allowlist from genesis configuration
+	allowlist []types.Address
 }
 
 func (p *deploymentParams) initRawParams() error {
@@ -80,15 +80,15 @@ func (p *deploymentParams) initChain() error {
 }
 
 func (p *deploymentParams) updateGenesisConfig() error {
-	// Fetch contract deployment whitelist from genesis config
-	deploymentWhitelist, err := config.GetDeploymentWhitelist(p.genesisConfig)
+	// Fetch contract deployment allowlist from genesis config
+	deploymentAllowlist, err := config.GetDeploymentAllowlist(p.genesisConfig)
 	if err != nil {
 		return err
 	}
 
 	doesExist := map[types.Address]bool{}
 
-	for _, a := range deploymentWhitelist {
+	for _, a := range deploymentAllowlist {
 		doesExist[a] = true
 	}
 
@@ -100,26 +100,26 @@ func (p *deploymentParams) updateGenesisConfig() error {
 		doesExist[a] = false
 	}
 
-	newDeploymentWhitelist := make([]types.Address, 0)
+	newDeploymentAllowlist := make([]types.Address, 0)
 
 	for addr, exists := range doesExist {
 		if exists {
-			newDeploymentWhitelist = append(newDeploymentWhitelist, addr)
+			newDeploymentAllowlist = append(newDeploymentAllowlist, addr)
 		}
 	}
 
-	// Set whitelist in genesis configuration
-	whitelistConfig := config.GetWhitelist(p.genesisConfig)
+	// Set allowlist in genesis configuration
+	allowlistConfig := config.GetAllowlist(p.genesisConfig)
 
-	if whitelistConfig == nil {
-		whitelistConfig = &chain.Whitelists{}
+	if allowlistConfig == nil {
+		allowlistConfig = &chain.Allowlists{}
 	}
 
-	whitelistConfig.Deployment = newDeploymentWhitelist
-	p.genesisConfig.Params.Whitelists = whitelistConfig
+	allowlistConfig.Deployment = newDeploymentAllowlist
+	p.genesisConfig.Params.Allowlists = allowlistConfig
 
-	// Save whitelist for result
-	p.whitelist = newDeploymentWhitelist
+	// Save allowlist for result
+	p.allowlist = newDeploymentAllowlist
 
 	return nil
 }
@@ -145,7 +145,7 @@ func (p *deploymentParams) getResult() command.CommandResult {
 	result := &DeploymentResult{
 		AddAddresses:    p.addAddresses,
 		RemoveAddresses: p.removeAddresses,
-		Whitelist:       p.whitelist,
+		Allowlist:       p.allowlist,
 	}
 
 	return result

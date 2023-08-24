@@ -236,7 +236,7 @@ func NewServer(config *Config) (*Server, error) {
 			Blockchain: m.blockchain,
 		}
 
-		deploymentWhitelist, err := configHelper.GetDeploymentWhitelist(config.Chain)
+		deploymentAllowlist, err := configHelper.GetDeploymentAllowlist(config.Chain)
 		if err != nil {
 			return nil, err
 		}
@@ -252,7 +252,7 @@ func NewServer(config *Config) (*Server, error) {
 				MaxSlots:            m.config.MaxSlots,
 				PriceLimit:          m.config.PriceLimit,
 				MaxAccountEnqueued:  m.config.MaxAccountEnqueued,
-				DeploymentWhitelist: deploymentWhitelist,
+				DeploymentAllowlist: deploymentAllowlist,
 			},
 		)
 		if err != nil {

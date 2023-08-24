@@ -96,7 +96,7 @@ type Config struct {
 	PriceLimit          uint64
 	MaxSlots            uint64
 	MaxAccountEnqueued  uint64
-	DeploymentWhitelist []types.Address
+	DeploymentAllowlist []types.Address
 }
 
 /* All requests are passed to the main loop
@@ -177,8 +177,8 @@ type TxPool struct {
 	// Event manager for txpool events
 	eventManager *eventManager
 
-	// deploymentWhitelist map
-	deploymentWhitelist deploymentWhitelist
+	// deploymentAllowlist map
+	deploymentAllowlist deploymentAllowlist
 
 	// indicates which txpool operator commands should be implemented
 	proto.UnimplementedTxnPoolOperatorServer
@@ -188,20 +188,20 @@ type TxPool struct {
 	pending int64
 }
 
-// deploymentWhitelist map which contains all addresses which can deploy contracts
+// deploymentAllowlist map which contains all addresses which can deploy contracts
 // if empty anyone can
-type deploymentWhitelist struct {
-	// Contract deployment whitelist
+type deploymentAllowlist struct {
+	// Contract deployment allowlist
 	addresses map[string]bool
 }
 
-// add an address to deploymentWhitelist map
-func (w *deploymentWhitelist) add(addr types.Address) {
+// add an address to deploymentAllowlist map
+func (w *deploymentAllowlist) add(addr types.Address) {
 	w.addresses[addr.String()] = true
 }
 
 // allowed checks if address can deploy smart contract
-func (w *deploymentWhitelist) allowed(addr types.Address) bool {
+func (w *deploymentAllowlist) allowed(addr types.Address) bool {
 	if len(w.addresses) == 0 {
 		return true
 	}
@@ -211,16 +211,16 @@ func (w *deploymentWhitelist) allowed(addr types.Address) bool {
 	return ok
 }
 
-func newDeploymentWhitelist(deploymentWhitelistRaw []types.Address) deploymentWhitelist {
-	deploymentWhitelist := deploymentWhitelist{
+func newDeploymentAllowlist(deploymentAllowlistRaw []types.Address) deploymentAllowlist {
+	deploymentAllowlist := deploymentAllowlist{
 		addresses: map[string]bool{},
 	}
 
-	for _, addr := range deploymentWhitelistRaw {
-		deploymentWhitelist.add(addr)
+	for _, addr := range deploymentAllowlistRaw {
+		deploymentAllowlist.add(addr)
 	}
 
-	return deploymentWhitelist
+	return deploymentAllowlist
 }
 
 // NewTxPool returns a new pool for processing incoming transactions.
@@ -266,8 +266,8 @@ func NewTxPool(
 		pool.topic = topic
 	}
 
-	// initialize deployment whitelist
-	pool.deploymentWhitelist = newDeploymentWhitelist(config.DeploymentWhitelist)
+	// initialize deployment allowlist
+	pool.deploymentAllowlist = newDeploymentAllowlist(config.DeploymentAllowlist)
 
 	if grpcServer != nil {
 		proto.RegisterTxnPoolOperatorServer(grpcServer, pool)
@@ -636,7 +636,7 @@ func (p *TxPool) validateTx(tx *types.Transaction) error {
 	}
 
 	// Check if transaction can deploy smart contract
-	if tx.IsContractCreation() && !p.deploymentWhitelist.allowed(tx.From) {
+	if tx.IsContractCreation() && !p.deploymentAllowlist.allowed(tx.From) {
 		return ErrSmartContractRestricted
 	}
 

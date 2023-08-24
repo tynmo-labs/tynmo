@@ -21,24 +21,24 @@ type showParams struct {
 	// genesis file path
 	genesisPath string
 
-	// deployment whitelist
-	whitelists Whitelists
+	// deployment allowlist
+	allowlists Allowlists
 }
 
-type Whitelists struct {
+type Allowlists struct {
 	deployment []types.Address
 }
 
 func (p *showParams) initRawParams() error {
 	// init genesis configuration
-	if err := p.initWhitelists(); err != nil {
+	if err := p.initAllowlists(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (p *showParams) initWhitelists() error {
+func (p *showParams) initAllowlists() error {
 	// import genesis configuration
 	genesisConfig, err := chain.Import(p.genesisPath)
 	if err != nil {
@@ -49,15 +49,15 @@ func (p *showParams) initWhitelists() error {
 		)
 	}
 
-	// fetch whitelists
-	deploymentWhitelist, err := config.GetDeploymentWhitelist(genesisConfig)
+	// fetch allowlists
+	deploymentAllowlist, err := config.GetDeploymentAllowlist(genesisConfig)
 	if err != nil {
 		return err
 	}
 
-	// set whitelists
-	p.whitelists = Whitelists{
-		deployment: deploymentWhitelist,
+	// set allowlists
+	p.allowlists = Allowlists{
+		deployment: deploymentAllowlist,
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (p *showParams) initWhitelists() error {
 
 func (p *showParams) getResult() command.CommandResult {
 	result := &ShowResult{
-		Whitelists: p.whitelists,
+		Allowlists: p.allowlists,
 	}
 
 	return result

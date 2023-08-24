@@ -11,7 +11,7 @@ type Params struct {
 	Forks          *Forks                 `json:"forks"`
 	ChainID        int                    `json:"chainID"`
 	Engine         map[string]interface{} `json:"engine"`
-	Whitelists     *Whitelists            `json:"whitelists,omitempty"`
+	Allowlists     *Allowlists            `json:"allowlists,omitempty"`
 	BlockGasTarget uint64                 `json:"blockGasTarget"`
 }
 
@@ -24,8 +24,8 @@ func (p *Params) GetEngine() string {
 	return ""
 }
 
-// Whitelists specifies supported whitelists
-type Whitelists struct {
+// Allowlists specifies supported allowlists
+type Allowlists struct {
 	Deployment []types.Address `json:"deployment,omitempty"`
 }
 

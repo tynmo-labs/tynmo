@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"tynmo/command/allowlist"
 	"tynmo/command/backup"
 	"tynmo/command/genesis"
 	"tynmo/command/helper"
@@ -19,7 +20,6 @@ import (
 	"tynmo/command/tbft"
 	"tynmo/command/txpool"
 	"tynmo/command/version"
-	"tynmo/command/whitelist"
 
 	"github.com/spf13/cobra"
 )
@@ -55,7 +55,7 @@ func (rc *RootCommand) registerSubCommands() {
 		genesis.GetCommand(),
 		server.GetCommand(),
 		start.GetCommand(),
-		whitelist.GetCommand(),
+		allowlist.GetCommand(),
 		loadbot.GetCommand(),
 		license.GetCommand(),
 		tbft.GetCommand(),

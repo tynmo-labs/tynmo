@@ -10,7 +10,7 @@ import (
 type DeploymentResult struct {
 	AddAddresses    []types.Address `json:"addAddress,omitempty"`
 	RemoveAddresses []types.Address `json:"removeAddress,omitempty"`
-	Whitelist       []types.Address `json:"whitelist"`
+	Allowlist       []types.Address `json:"allowlist"`
 }
 
 func (r *DeploymentResult) GetOutput() string {
@@ -26,7 +26,7 @@ func (r *DeploymentResult) GetOutput() string {
 		buffer.WriteString(fmt.Sprintf("Removed addresses: %s,\n", r.RemoveAddresses))
 	}
 
-	buffer.WriteString(fmt.Sprintf("Contract deployment whitelist : %s,\n", r.Whitelist))
+	buffer.WriteString(fmt.Sprintf("Contract deployment allowlist : %s,\n", r.Allowlist))
 
 	return buffer.String()
 }
