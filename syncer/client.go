@@ -296,11 +296,11 @@ func (m *syncPeerClient) GetBlocks(
 	return blockCh, nil
 }
 
-// GetSprintSnapshot returns stream of the latest sprint snapshots
-func (m *syncPeerClient) GetSprintSnapshot(
+// GetEpochSnapshot returns stream of the latest epoch snapshots
+func (m *syncPeerClient) GetEpochSnapshot(
 	peerID peer.ID,
 	timeoutPerBlock time.Duration,
-) (*PeerSprintSnapshot, error) {
+) (*PeerEpochSnapshot, error) {
 	clt, err := m.newSyncPeerClient(peerID)
 	if err != nil {
 		return nil, err
@@ -309,13 +309,13 @@ func (m *syncPeerClient) GetSprintSnapshot(
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), defaultTimeoutForStatus)
 	defer cancel()
 
-	snapshot, err := clt.GetSprintSnapshot(timeoutCtx, &emptypb.Empty{})
+	snapshot, err := clt.GetEpochSnapshot(timeoutCtx, &emptypb.Empty{})
 	if err != nil {
 		return nil, err
 	}
 
-	result := types.SprintProposerSnapshotResult{
-		CurSprintHeightBase: snapshot.GetSprintHeight(),
+	result := types.EpochProposerSnapshotResult{
+		CurEpochHeightBase: snapshot.GetEpochHeight(),
 	}
 
 	for _, addr := range snapshot.GetAddresses() {
@@ -323,7 +323,7 @@ func (m *syncPeerClient) GetSprintSnapshot(
 		result.PrioritizedValidatorAddresses = append(result.PrioritizedValidatorAddresses, newAddr)
 	}
 
-	return &PeerSprintSnapshot{
+	return &PeerEpochSnapshot{
 		ID:     peerID,
 		Result: result,
 	}, nil

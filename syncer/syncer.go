@@ -40,7 +40,7 @@ type syncer struct {
 	// Timeout for syncing a block
 	blockTimeout time.Duration
 
-	sprintLocker SprintLocker
+	epochLocker EpochLocker
 
 	// Channel to notify Sync that a new status arrived
 	newStatusCh   chan struct{}
@@ -68,7 +68,7 @@ func NewSyncer(
 		newSnapshotCh:   make(chan struct{}, 10),
 		peerMap:         new(PeerMap),
 		peerSnapshotMap: new(PeerMap),
-		sprintLocker:    SprintLocker{sprint: uint64(math.MaxUint64)},
+		epochLocker:     EpochLocker{epoch: uint64(math.MaxUint64)},
 	}
 }
 

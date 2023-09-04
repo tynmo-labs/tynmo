@@ -357,11 +357,11 @@ func (t *Transaction) UnmarshalRLPFrom(p *fastrlp.Parser, v *fastrlp.Value) erro
 	return nil
 }
 
-func (sps *SprintProposerSnapshotResult) UnmarshalRLP(input []byte) error {
-	return UnmarshalRlp(sps.UnmarshalRLPFrom, input)
+func (epsr *EpochProposerSnapshotResult) UnmarshalRLP(input []byte) error {
+	return UnmarshalRlp(epsr.UnmarshalRLPFrom, input)
 }
 
-func (sps *SprintProposerSnapshotResult) UnmarshalRLPFrom(p *fastrlp.Parser, v *fastrlp.Value) error {
+func (epsr *EpochProposerSnapshotResult) UnmarshalRLPFrom(p *fastrlp.Parser, v *fastrlp.Value) error {
 	elems, err := v.GetElems()
 	if err != nil {
 		return err
@@ -371,8 +371,8 @@ func (sps *SprintProposerSnapshotResult) UnmarshalRLPFrom(p *fastrlp.Parser, v *
 		return fmt.Errorf("incorrect number of elements to decode block, expected 3 but found %d", len(elems))
 	}
 
-	// CurSprintHeightBase
-	if sps.CurSprintHeightBase, err = elems[0].GetUint64(); err != nil {
+	// CurEpochHeightBase
+	if epsr.CurEpochHeightBase, err = elems[0].GetUint64(); err != nil {
 		return err
 	}
 
@@ -385,10 +385,10 @@ func (sps *SprintProposerSnapshotResult) UnmarshalRLPFrom(p *fastrlp.Parser, v *
 	for _, address := range addresses {
 		if vv, _ := address.Bytes(); len(vv) == AddressLength {
 			addr := BytesToAddress(vv)
-			sps.PrioritizedValidatorAddresses = append(sps.PrioritizedValidatorAddresses, addr)
+			epsr.PrioritizedValidatorAddresses = append(epsr.PrioritizedValidatorAddresses, addr)
 		} else {
 			// reset To
-			sps.PrioritizedValidatorAddresses = nil
+			epsr.PrioritizedValidatorAddresses = nil
 		}
 	}
 

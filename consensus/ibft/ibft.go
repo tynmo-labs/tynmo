@@ -486,7 +486,7 @@ func (i *backendIBFT) PreCommitState(header *types.Header, txn *state.Transition
 }
 
 // GetEpoch returns the current epoch
-func (i *backendIBFT) GetEpoch(number uint64) uint64 {
+func (i *backendIBFT) GetEpochBaseHeight(number uint64) uint64 {
 	if number%i.epochSize == 0 {
 		return number / i.epochSize
 	}
@@ -655,8 +655,8 @@ func (i *backendIBFT) WaitPeerCount() int {
 	return int(quorum) - 1
 }
 
-func (i *backendIBFT) GetSprint(height uint64) uint64 { return 0 }
 
-func (i *backendIBFT) StoreSprintSnapshotResult(snapshot *types.SprintProposerSnapshotResult) error {
+func (i *backendIBFT) StoreEpochSnapshotResult(snapshot *types.EpochProposerSnapshotResult) error {
 	return nil
 }
+

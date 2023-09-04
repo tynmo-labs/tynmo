@@ -425,10 +425,10 @@ func (i *backendIBFT) extractParentCommittedSeals(
 	return i.extractCommittedSeals(header)
 }
 
-func (i *backendIBFT) SprintHeightBase() uint64 {
+func (i *backendIBFT) EpochBaseHeight() uint64 {
 	return uint64(0)
 }
 
-func (i *backendIBFT) GetSprintSnapshotResult() (*types.SprintProposerSnapshotResult, error) {
+func (i *backendIBFT) GetEpochSnapshotResult() (*types.EpochProposerSnapshotResult, error) {
 	return nil, nil
 }

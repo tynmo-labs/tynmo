@@ -120,12 +120,12 @@ func (s *syncPeerService) GetInitConfig(
 	}, nil
 }
 
-// GetSprintSnapshot is a gRPC endpoint to return the latest sprint snapshot result
-func (s *syncPeerService) GetSprintSnapshot(
+// GetEpochSnapshot is a gRPC endpoint to return the latest epoch snapshot result
+func (s *syncPeerService) GetEpochSnapshot(
 	ctx context.Context,
 	req *empty.Empty,
-) (*proto.SprintSnapshot, error) {
-	snapshotResult, err := s.consensus.GetSprintSnapshotResult()
+) (*proto.EpochSnapshot, error) {
+	snapshotResult, err := s.consensus.GetEpochSnapshotResult()
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +134,8 @@ func (s *syncPeerService) GetSprintSnapshot(
 	for _, snapshot := range snapshotResult.PrioritizedValidatorAddresses {
 		addresses = append(addresses, snapshot.Bytes())
 	}
-	return &proto.SprintSnapshot{
-		SprintHeight: snapshotResult.CurSprintHeightBase,
-		Addresses:    addresses,
+	return &proto.EpochSnapshot{
+		EpochHeight: snapshotResult.CurEpochHeightBase,
+		Addresses:   addresses,
 	}, nil
 }

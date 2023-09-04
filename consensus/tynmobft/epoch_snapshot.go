@@ -11,9 +11,7 @@ import (
 	"tynmo/types"
 )
 
-const SprintSize = 10
-
-var activeSprintProposerSnapshot *SprintProposerSnapshot = nil
+var activeEpochProposerSnapshot *EpochProposerSnapshot = nil
 
 var (
 	errHeightSyncIncomplete = errors.New("height syncing is not complete, tolerate and wait")
@@ -21,18 +19,6 @@ var (
 	errUnexpectedMap        = errors.New("unexpected snapshot map: can not find height")
 	errSyncSnapshotEmpty    = errors.New("snapshot sync result empty")
 )
-
-func GetSprint(height uint64) uint64 {
-	return height - height%SprintSize
-}
-
-func GetSprintRound(height uint64) uint64 {
-	return height % SprintSize
-}
-
-func IsSprintStart(height uint64) bool {
-	return height == 1 || GetSprintRound(height) == 0
-}
 
 // PrioritizedValidator holds ValidatorMetadata together with priority
 type PrioritizedValidator struct {
@@ -58,8 +44,8 @@ const (
 	SpsStatusCalced                        // snapshot calculated
 )
 
-type SprintProposerSnapshot struct {
-	CurSprintHeightBase           uint64
+type EpochProposerSnapshot struct {
+	CurEpochHeightBase            uint64
 	ProposerSnapshotMap           map[uint64]*ProposerSnapshot // height -> *ProposerSnapshot
 	TotalVotingPower              *big.Int
 	Logger                        hclog.Logger // Reference to the logging
@@ -68,121 +54,123 @@ type SprintProposerSnapshot struct {
 	PrioritizedValidatorAddresses []types.Address
 }
 
-func GetSprintProposerSnapshotResult(sps *SprintProposerSnapshot) *types.SprintProposerSnapshotResult {
-	var spsr types.SprintProposerSnapshotResult
-	spsr.CurSprintHeightBase = sps.CurSprintHeightBase
-	for i := 0; i < SprintSize; i++ {
-		curHeight := sps.CurSprintHeightBase + uint64(i)
-		ps := sps.ProposerSnapshotMap[curHeight]
-		spsr.PrioritizedValidatorAddresses = append(spsr.PrioritizedValidatorAddresses, ps.Proposer.Metadata.Address)
+func GetEpochProposerSnapshotResult(eps *EpochProposerSnapshot) *types.EpochProposerSnapshotResult {
+	var epsr types.EpochProposerSnapshotResult
+	epsr.CurEpochHeightBase = eps.CurEpochHeightBase
+	for i := uint64(0); i < eps.backendConsensus.GetEpochSize(); i++ {
+		curHeight := eps.CurEpochHeightBase + uint64(i)
+		ps := eps.ProposerSnapshotMap[curHeight]
+		epsr.PrioritizedValidatorAddresses = append(epsr.PrioritizedValidatorAddresses, ps.Proposer.Metadata.Address)
 	}
 
-	return &spsr
+	return &epsr
 }
 
-func (sps *SprintProposerSnapshot) TrimRoundProposerMap(height uint64) {
+func (eps *EpochProposerSnapshot) TrimRoundProposerMap(height uint64) {
 	curHeight := height
 	for {
 		nextHeight := curHeight + 1
-		ps, ok := sps.ProposerSnapshotMap[nextHeight]
+		ps, ok := eps.ProposerSnapshotMap[nextHeight]
 		if !ok {
-			delete(sps.ProposerSnapshotMap, curHeight)
+			delete(eps.ProposerSnapshotMap, curHeight)
 			break
 		}
-		sps.ProposerSnapshotMap[curHeight] = ps
+		eps.ProposerSnapshotMap[curHeight] = ps
 		curHeight = nextHeight
 	}
 }
 
-func (sps *SprintProposerSnapshot) cleanupHistorySnapshotMap(height uint64) {
-	for i := uint64(0); i < SprintSize; i++ {
+func (eps *EpochProposerSnapshot) cleanupHistorySnapshotMap(height uint64) {
+	for i := uint64(0); i < eps.backendConsensus.GetEpochSize(); i++ {
 		curHeight := height - 1 - i
-		_, ok := sps.ProposerSnapshotMap[curHeight]
+		_, ok := eps.ProposerSnapshotMap[curHeight]
 		if ok {
-			delete(sps.ProposerSnapshotMap, curHeight)
+			delete(eps.ProposerSnapshotMap, curHeight)
 		}
 	}
 }
 
-func (sps *SprintProposerSnapshot) StoreSprintSnapshotResultToLocalState() error {
-	return sps.backendConsensus.StoreSprintSnapshotResult(GetSprintProposerSnapshotResult(sps))
+func (eps *EpochProposerSnapshot) StoreEpochSnapshotResultToLocalState() error {
+	return eps.backendConsensus.StoreEpochSnapshotResult(GetEpochProposerSnapshotResult(eps))
 }
 
-func (sps *SprintProposerSnapshot) LoadFromAddress() bool {
-	return sps.Status == SpsStatusLoaded || sps.Status == SpsStatusSynced
+func (eps *EpochProposerSnapshot) LoadFromAddress() bool {
+	return eps.Status == SpsStatusLoaded || eps.Status == SpsStatusSynced
 }
 
-func (sps *SprintProposerSnapshot) CanCalc() bool {
-	return sps.Status != SpsStatusInit
+func (eps *EpochProposerSnapshot) CanCalc() bool {
+	return eps.Status != SpsStatusInit
 }
 
-func (sps *SprintProposerSnapshot) GetProposerAddress(height uint64, round uint64) (*types.Address, error) {
-	isSprintStart := IsSprintStart(height)
+func (eps *EpochProposerSnapshot) GetProposerAddress(height uint64, round uint64) (*types.Address, error) {
+	isEpochStart := eps.backendConsensus.IsStartOfEpoch(height)
 	var err error = nil
-	addressIdx := (height + round) % SprintSize
+	addressIdx := (height + round) % eps.backendConsensus.GetEpochSize()
 
 	// Early height syncing might not be complete yet, so check local state first and wait until syncing
 	// is done, before that just returns an error.
-	if sps.Status == SpsStatusInit {
-		sprintSnapshotResult, err := sps.backendConsensus.GetSprintSnapshotResult()
+	if eps.Status == SpsStatusInit {
+		epochSnapshotResult, err := eps.backendConsensus.GetEpochSnapshotResult()
 		if err != nil {
 			return nil, err
 		}
-		if sprintSnapshotResult != nil && sprintSnapshotResult.CurSprintHeightBase == GetSprint(height) && len(sprintSnapshotResult.PrioritizedValidatorAddresses) > 0 {
-			sps.Status = SpsStatusLoaded
-			sps.CurSprintHeightBase = sprintSnapshotResult.CurSprintHeightBase
-			sps.PrioritizedValidatorAddresses = sprintSnapshotResult.PrioritizedValidatorAddresses
+		if epochSnapshotResult != nil &&
+			epochSnapshotResult.CurEpochHeightBase == eps.backendConsensus.GetEpochBaseHeight(height) &&
+			len(epochSnapshotResult.PrioritizedValidatorAddresses) > 0 {
+			eps.Status = SpsStatusLoaded
+			eps.CurEpochHeightBase = epochSnapshotResult.CurEpochHeightBase
+			eps.PrioritizedValidatorAddresses = epochSnapshotResult.PrioritizedValidatorAddresses
 		} else {
-			sprintSnapshotResult, err = sps.backendConsensus.syncer.SyncSprintSnapshotOnce()
+			epochSnapshotResult, err = eps.backendConsensus.syncer.SyncEpochSnapshotOnce()
 			if err != nil {
 				return nil, err
 			}
-			if sprintSnapshotResult == nil || len(sprintSnapshotResult.PrioritizedValidatorAddresses) == 0 {
-				sps.Status = SpsStatusSyncNone
+			if epochSnapshotResult == nil || len(epochSnapshotResult.PrioritizedValidatorAddresses) == 0 {
+				eps.Status = SpsStatusSyncNone
 			} else {
-				sps.Status = SpsStatusSynced
-				sps.CurSprintHeightBase = sprintSnapshotResult.CurSprintHeightBase
-				sps.PrioritizedValidatorAddresses = sprintSnapshotResult.PrioritizedValidatorAddresses
+				eps.Status = SpsStatusSynced
+				eps.CurEpochHeightBase = epochSnapshotResult.CurEpochHeightBase
+				eps.PrioritizedValidatorAddresses = epochSnapshotResult.PrioritizedValidatorAddresses
 			}
 		}
 	}
 
-	if sps.LoadFromAddress() {
-		if sps.CurSprintHeightBase >= GetSprint(height) {
-			return &sps.PrioritizedValidatorAddresses[addressIdx], nil
+	if eps.LoadFromAddress() {
+		if eps.CurEpochHeightBase >= eps.backendConsensus.GetEpochBaseHeight(height) {
+			return &eps.PrioritizedValidatorAddresses[addressIdx], nil
 		} else {
-			sps.Status = SpsStatusInit
+			eps.Status = SpsStatusInit
 		}
 	}
 
 	// Calculate snapshot from stake contract
-	if isSprintStart && sps.CanCalc() {
-		if len(sps.ProposerSnapshotMap) == 0 || sps.CurSprintHeightBase != GetSprint(height) {
-			sps.Logger.Info("SnapshotMap empty, CalculateAll", "height", height)
-			err = sps.CalculateAll(height)
+	if isEpochStart && eps.CanCalc() {
+		if len(eps.ProposerSnapshotMap) == 0 || eps.CurEpochHeightBase != eps.backendConsensus.GetEpochBaseHeight(height) {
+			eps.Logger.Info("SnapshotMap empty, CalculateAll", "height", height)
+			err = eps.CalculateAll(height)
 			if err != nil {
-				sps.Logger.Error("CalculateAll error", "error", err)
+				eps.Logger.Error("CalculateAll error", "error", err)
 				return nil, err
 			}
-			sps.Status = SpsStatusCalced
+			eps.Status = SpsStatusCalced
 			// Save the snapshot to local state store
-			sps.StoreSprintSnapshotResultToLocalState()
+			eps.StoreEpochSnapshotResultToLocalState()
 		}
 	}
 
-	snapshot, has := sps.ProposerSnapshotMap[addressIdx+sps.CurSprintHeightBase]
+	snapshot, has := eps.ProposerSnapshotMap[addressIdx+eps.CurEpochHeightBase]
 	if has {
 		return &snapshot.Proposer.Metadata.Address, nil
 	}
 	return nil, errUnexpectedMap
 }
 
-func (sps *SprintProposerSnapshot) PreProposerSnapshot(height uint64) (*ProposerSnapshot, error) {
-	if len(sps.ProposerSnapshotMap) == 0 {
+func (eps *EpochProposerSnapshot) PreProposerSnapshot(height uint64) (*ProposerSnapshot, error) {
+	if len(eps.ProposerSnapshotMap) == 0 {
 		return nil, fmt.Errorf("snapshot map should has value")
 	}
 	heights := make([]uint64, 0)
-	for height := range sps.ProposerSnapshotMap {
+	for height := range eps.ProposerSnapshotMap {
 		heights = append(heights, height)
 	}
 	//desc
@@ -196,70 +184,70 @@ func (sps *SprintProposerSnapshot) PreProposerSnapshot(height uint64) (*Proposer
 			break
 		}
 	}
-	return sps.ProposerSnapshotMap[pre], nil
+	return eps.ProposerSnapshotMap[pre], nil
 }
 
-func (sps *SprintProposerSnapshot) CalculateNextSprint(height uint64) error {
-	prePs, err := sps.PreProposerSnapshot(height)
+func (eps *EpochProposerSnapshot) CalculateNextEpoch(height uint64) error {
+	prePs, err := eps.PreProposerSnapshot(height)
 	if err != nil {
 		return err
 	}
 
-	sprint := GetSprint(height)
+	epoch := eps.backendConsensus.GetEpochBaseHeight(height)
 
-	sps.ProposerSnapshotMap = make(map[uint64]*ProposerSnapshot)
-	sps.ProposerSnapshotMap[prePs.Height] = prePs
+	eps.ProposerSnapshotMap = make(map[uint64]*ProposerSnapshot)
+	eps.ProposerSnapshotMap[prePs.Height] = prePs
 
 	psNew := prePs.Copy()
-	for i := 0; i < SprintSize; i++ {
-		nextHeight := sprint + uint64(i)
-		psNext, err := sps.NextHeight(psNew, nextHeight, sps.TotalVotingPower)
+	for i := uint64(0); i < eps.backendConsensus.GetEpochSize(); i++ {
+		nextHeight := epoch + i
+		psNext, err := eps.NextHeight(psNew, nextHeight, eps.TotalVotingPower)
 		if err != nil {
 			return err
 		}
 
-		sps.CurSprintHeightBase = sprint
-		sps.ProposerSnapshotMap[nextHeight] = psNext
+		eps.CurEpochHeightBase = epoch
+		eps.ProposerSnapshotMap[nextHeight] = psNext
 		psNew = psNext
 	}
 
 	return nil
 }
 
-func (sps *SprintProposerSnapshot) CalculateSkip(height uint64, round uint64) error {
-	sprint := GetSprint(height)
-	preMap := sps.ProposerSnapshotMap
-	sps.ProposerSnapshotMap = make(map[uint64]*ProposerSnapshot)
+func (eps *EpochProposerSnapshot) CalculateSkip(height uint64, round uint64) error {
+	epoch := eps.backendConsensus.GetEpochBaseHeight(height)
+	preMap := eps.ProposerSnapshotMap
+	eps.ProposerSnapshotMap = make(map[uint64]*ProposerSnapshot)
 
-	for i := 0; i < SprintSize; i++ {
-		nextHeight := sprint + uint64(i)
+	for i := uint64(0); i < eps.backendConsensus.GetEpochSize(); i++ {
+		nextHeight := epoch + i
 		psNew := preMap[nextHeight]
 		switch {
 		case nextHeight < height:
-			sps.ProposerSnapshotMap[nextHeight] = preMap[nextHeight]
+			eps.ProposerSnapshotMap[nextHeight] = preMap[nextHeight]
 		case nextHeight == height:
 			for j := 0; j < int(round); j++ {
-				psNext, err := sps.NextHeight(psNew.Copy(), nextHeight, sps.TotalVotingPower)
+				psNext, err := eps.NextHeight(psNew.Copy(), nextHeight, eps.TotalVotingPower)
 				if err != nil {
 					return err
 				}
 				psNew = psNext
 			}
 			psNew.Round = round
-			sps.ProposerSnapshotMap[nextHeight] = psNew
+			eps.ProposerSnapshotMap[nextHeight] = psNew
 		case nextHeight > height:
-			psNext, err := sps.NextHeight(psNew.Copy(), nextHeight, sps.TotalVotingPower)
+			psNext, err := eps.NextHeight(psNew.Copy(), nextHeight, eps.TotalVotingPower)
 			if err != nil {
 				return err
 			}
 			psNext.Round = 0
-			sps.ProposerSnapshotMap[nextHeight] = psNext
+			eps.ProposerSnapshotMap[nextHeight] = psNext
 		}
 	}
 	return nil
 }
 
-func (sps *SprintProposerSnapshot) NextHeight(ps *ProposerSnapshot, height uint64, totalVotingPower *big.Int) (*ProposerSnapshot, error) {
+func (eps *EpochProposerSnapshot) NextHeight(ps *ProposerSnapshot, height uint64, totalVotingPower *big.Int) (*ProposerSnapshot, error) {
 	psNew := ps.Copy()
 	for _, validator := range psNew.Validators {
 		validator.ProposerPriority.Add(validator.ProposerPriority, validator.Metadata.VotingPower)
@@ -279,10 +267,10 @@ func (sps *SprintProposerSnapshot) NextHeight(ps *ProposerSnapshot, height uint6
 	return psNew, nil
 }
 
-func (sps *SprintProposerSnapshot) GenerateProposerSnapshot(height uint64) (*ProposerSnapshot, error) {
-	accountSet, err := sps.backendConsensus.GetAccountSet(height)
+func (eps *EpochProposerSnapshot) GenerateProposerSnapshot(height uint64) (*ProposerSnapshot, error) {
+	accountSet, err := eps.backendConsensus.GetAccountSet(height)
 	if err != nil {
-		sps.Logger.Debug("SprintProposerSnapshot: Calculate: err", err)
+		eps.Logger.Debug("EpochProposerSnapshot: Calculate: err", err)
 		return nil, err
 	}
 
@@ -308,44 +296,44 @@ func (sps *SprintProposerSnapshot) GenerateProposerSnapshot(height uint64) (*Pro
 	return ps, nil
 }
 
-// CalculateAll computing is based on the sprint base height
-func (sps *SprintProposerSnapshot) CalculateAll(height uint64) error {
-	sps.Logger.Debug("SprintProposerSnapshot: Calculate: starts")
-	sprint := GetSprint(height)
+// CalculateAll computing is based on the epoch base height
+func (eps *EpochProposerSnapshot) CalculateAll(height uint64) error {
+	eps.Logger.Debug("EpochProposerSnapshot: Calculate: starts")
+	epoch := eps.backendConsensus.GetEpochBaseHeight(height)
 	// Cleanup useless history snapshots
-	sps.cleanupHistorySnapshotMap(sprint)
+	eps.cleanupHistorySnapshotMap(epoch)
 
 	// First round
-	ps, err := sps.GenerateProposerSnapshot(height)
+	ps, err := eps.GenerateProposerSnapshot(height)
 	if err != nil {
 		return err
 	}
 
-	sps.TotalVotingPower = ps.GetTotalVotingPower()
+	eps.TotalVotingPower = ps.GetTotalVotingPower()
 
 	// ps.Proposer.ProposerPriority.Sub(ps.Proposer.ProposerPriority, totalVotingPower)
-	sps.CurSprintHeightBase = sprint
-	sps.ProposerSnapshotMap[sprint] = ps
+	eps.CurEpochHeightBase = epoch
+	eps.ProposerSnapshotMap[epoch] = ps
 
-	// Second round to SprintSize round
+	// Second round to EpochSize round
 	psFormer := ps
-	for i := 1; i < SprintSize; i++ {
-		nextHeight := sprint + uint64(i)
-		psNew, err := sps.NextHeight(psFormer.Copy(), nextHeight, sps.TotalVotingPower)
+	for i := uint64(1); i < eps.backendConsensus.GetEpochSize(); i++ {
+		nextHeight := epoch + i
+		psNew, err := eps.NextHeight(psFormer.Copy(), nextHeight, eps.TotalVotingPower)
 		if err != nil {
 			return err
 		}
-		sps.ProposerSnapshotMap[nextHeight] = psNew
+		eps.ProposerSnapshotMap[nextHeight] = psNew
 		psFormer = psNew
 	}
-	sps.debugPrint()
+	eps.debugPrint()
 	return nil
 }
 
-func (sps *SprintProposerSnapshot) debugPrint() {
-	sps.Logger.Debug("SprintProposerSnapshot Print", "CurSprintHeightBase", sps.CurSprintHeightBase)
+func (eps *EpochProposerSnapshot) debugPrint() {
+	eps.Logger.Debug("EpochProposerSnapshot Print", "CurEpochHeightBase", eps.CurEpochHeightBase)
 	heights := make([]uint64, 0)
-	for height := range sps.ProposerSnapshotMap {
+	for height := range eps.ProposerSnapshotMap {
 		heights = append(heights, height)
 	}
 	// ascending order
@@ -353,10 +341,10 @@ func (sps *SprintProposerSnapshot) debugPrint() {
 		return heights[i] < heights[j]
 	})
 	for _, height := range heights {
-		ps := sps.ProposerSnapshotMap[height]
-		sps.Logger.Debug("SprintProposerSnapshot Print", "Height", height, "Voted Proposer address", ps.Proposer.Metadata.Address.String())
+		ps := eps.ProposerSnapshotMap[height]
+		eps.Logger.Debug("EpochProposerSnapshot Print", "Height", height, "Voted Proposer address", ps.Proposer.Metadata.Address.String())
 		for _, validator := range ps.Validators {
-			sps.Logger.Debug("SprintProposerSnapshot Print", "Validator: ProposerPriority", validator.ProposerPriority,
+			eps.Logger.Debug("EpochProposerSnapshot Print", "Validator: ProposerPriority", validator.ProposerPriority,
 				"validator addr", validator.Metadata.Address.String(),
 				"validator vp", validator.Metadata.VotingPower,
 			)

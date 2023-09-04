@@ -425,19 +425,40 @@ func (i *backendIBFT) extractParentCommittedSeals(
 	return i.extractCommittedSeals(header)
 }
 
-func (i *backendIBFT) SprintHeightBase() uint64 {
+func (i *backendIBFT) GetEpochSize() uint64 {
+	return i.epochSize
+}
+
+// GetEpochBaseHeight returns the starting epoch height of the given height.
+func (i *backendIBFT) GetEpochBaseHeight(height uint64) uint64 {
+	return height - height%i.epochSize
+}
+
+func (i *backendIBFT) GetEpochOffset(height uint64) uint64 {
+	return height % i.epochSize
+}
+
+func (i *backendIBFT) IsStartOfEpoch(height uint64) bool {
+	return height == 1 || i.GetEpochOffset(height) == 0
+}
+
+func (i *backendIBFT) IsEndOfEpoch(height uint64) bool {
+	return i.GetEpochOffset(height) == i.epochSize-1
+}
+
+func (i *backendIBFT) EpochBaseHeight() uint64 {
 	height := i.blockchain.Header().Number
-	return GetSprint(height)
+	return i.GetEpochBaseHeight(height)
 }
 
 func (i *backendIBFT) GetAccountSet(height uint64) (types.AccountSet, error) {
 	return i.validatorsSnapshotCache.GetSnapshot(height)
 }
 
-func (i *backendIBFT) GetSprintSnapshotResult() (*types.SprintProposerSnapshotResult, error) {
+func (i *backendIBFT) GetEpochSnapshotResult() (*types.EpochProposerSnapshotResult, error) {
 	return i.state.ProposerSnapshotStore.GetProposerSnapshotResult()
 }
 
-func (i *backendIBFT) StoreSprintSnapshotResult(snapshot *types.SprintProposerSnapshotResult) error {
+func (i *backendIBFT) StoreEpochSnapshotResult(snapshot *types.EpochProposerSnapshotResult) error {
 	return i.state.ProposerSnapshotStore.WriteProposerSnapshotResult(snapshot)
 }

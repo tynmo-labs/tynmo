@@ -8,14 +8,14 @@ import (
 	"tynmo/types"
 )
 
-type SprintLocker struct {
-	sprint uint64
+type EpochLocker struct {
+	epoch uint64
 	sync.RWMutex
 }
 
 // initNewPeerStatus fetches status of the peer and put to peer map
 func (s *syncer) initNewPeerSnapshot(peerID peer.ID) {
-	peer, err := s.syncPeerClient.GetSprintSnapshot(peerID, s.blockTimeout)
+	peer, err := s.syncPeerClient.GetEpochSnapshot(peerID, s.blockTimeout)
 	if err != nil {
 		s.logger.Warn("failed to get peer status, skip", "id", peerID, "err", err)
 		return
@@ -28,7 +28,7 @@ func (s *syncer) initNewPeerSnapshot(peerID peer.ID) {
 	}
 }
 
-func (s *syncer) SyncSprintSnapshot(callback func(*types.SprintProposerSnapshotResult)) error {
+func (s *syncer) SyncEpochSnapshot(callback func(*types.EpochProposerSnapshotResult)) error {
 	var wg sync.WaitGroup
 	var wgCount = s.consensus.WaitPeerCount()
 	var skipList = make(map[peer.ID]bool)
@@ -37,13 +37,13 @@ func (s *syncer) SyncSprintSnapshot(callback func(*types.SprintProposerSnapshotR
 	go func() {
 		for i := 0; i < wgCount; i++ {
 			<-s.newSnapshotCh
-			localLatest := s.consensus.SprintHeightBase()
+			localLatest := s.consensus.EpochBaseHeight()
 			bestPeer := s.peerSnapshotMap.BestSnapshotPeer(skipList)
 			if bestPeer == nil {
 				skipList = make(map[peer.ID]bool)
 			} else {
 				// if the bestPeer does not have a new block continue
-				if bestPeer.Result.CurSprintHeightBase > localLatest {
+				if bestPeer.Result.CurEpochHeightBase > localLatest {
 					skipList[bestPeer.ID] = true
 					callback(&bestPeer.Result)
 				}
@@ -57,7 +57,7 @@ func (s *syncer) SyncSprintSnapshot(callback func(*types.SprintProposerSnapshotR
 	return nil
 }
 
-func (s *syncer) SyncSprintSnapshotOnce() (*types.SprintProposerSnapshotResult, error) {
+func (s *syncer) SyncEpochSnapshotOnce() (*types.EpochProposerSnapshotResult, error) {
 	localLatest := s.blockchain.Header().Number
 	bestPeer := s.peerMap.BestPeer(nil)
 
@@ -70,26 +70,26 @@ func (s *syncer) SyncSprintSnapshotOnce() (*types.SprintProposerSnapshotResult, 
 		return nil, nil
 	}
 
-	s.sprintLocker.Lock()
-	defer s.sprintLocker.Unlock()
+	s.epochLocker.Lock()
+	defer s.epochLocker.Unlock()
 
-	sprint := s.consensus.GetSprint(bestPeer.Number)
+	epoch := s.consensus.GetEpochBaseHeight(bestPeer.Number)
 
-	if sprint == s.sprintLocker.sprint {
+	if epoch == s.epochLocker.epoch {
 		return nil, nil
 	}
 
-	if sprint != s.sprintLocker.sprint {
-		s.sprintLocker.sprint = sprint
+	if epoch != s.epochLocker.epoch {
+		s.epochLocker.epoch = epoch
 	}
 
-	snapshot, err := s.syncPeerClient.GetSprintSnapshot(bestPeer.ID, s.blockTimeout)
+	snapshot, err := s.syncPeerClient.GetEpochSnapshot(bestPeer.ID, s.blockTimeout)
 	if err != nil {
 		s.logger.Error("failed to get peer status, skip", "id", bestPeer.ID, "err", err)
 		return nil, err
 	}
 
-	err = s.consensus.StoreSprintSnapshotResult(&snapshot.Result)
+	err = s.consensus.StoreEpochSnapshotResult(&snapshot.Result)
 	if err != nil {
 		return nil, err
 	}

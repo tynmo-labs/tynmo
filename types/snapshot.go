@@ -1,6 +1,6 @@
 package types
 
-type SprintProposerSnapshotResult struct {
-	CurSprintHeightBase           uint64
+type EpochProposerSnapshotResult struct {
+	CurEpochHeightBase            uint64
 	PrioritizedValidatorAddresses []Address
 }

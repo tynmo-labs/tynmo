@@ -18,7 +18,7 @@ const (
 )
 
 type validatorSnapshot struct {
-	Sprint   uint64           `json:"sprint"`
+	Epoch    uint64           `json:"epoch"`
 	Snapshot types.AccountSet `json:"snapshot"`
 }
 
@@ -26,7 +26,7 @@ func (vs *validatorSnapshot) copy() *validatorSnapshot {
 	copiedAccountSet := vs.Snapshot.Copy()
 
 	return &validatorSnapshot{
-		Sprint:   vs.Sprint,
+		Epoch:    vs.Epoch,
 		Snapshot: copiedAccountSet,
 	}
 }
@@ -54,25 +54,25 @@ func (v *validatorsSnapshotCache) GetSnapshot(height uint64) (types.AccountSet, 
 	v.lock.Lock()
 	defer v.lock.Unlock()
 
-	sprintToGetSnapshot := GetSprint(height)
-	v.logger.Trace("Retrieving snapshot started...", "Height:", height, "Sprint:", sprintToGetSnapshot)
+	epochToGetSnapshot := v.backendConsensus.GetEpochBaseHeight(height)
+	v.logger.Trace("Retrieving snapshot started...", "Height:", height, "Epoch:", epochToGetSnapshot)
 
-	latestValidatorSnapshot, err := v.getLastCachedSnapshot(sprintToGetSnapshot)
+	latestValidatorSnapshot, err := v.getLastCachedSnapshot(epochToGetSnapshot)
 	if err != nil {
 		return nil, err
 	}
 
 	if latestValidatorSnapshot != nil {
-		// we have snapshot for required block (sprint) in cache
+		// we have snapshot for required block (epoch) in cache
 		return latestValidatorSnapshot.Snapshot, nil
 	}
 
 	// latestValidatorSnapshot == nil
-	// Haven't managed to retrieve snapshot for any sprint from the cache.
+	// Haven't managed to retrieve snapshot for any epoch from the cache.
 	// Build snapshot from the scratch, by applying delta from the genesis block.
 	validatorSnapshot, err := v.computeSnapshot(height)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute snapshot for sprint 0: %w", err)
+		return nil, fmt.Errorf("failed to compute snapshot for epoch 0: %w", err)
 	}
 
 	v.logger.Trace("TODO: Built validators snapshot for genesis block")
@@ -95,7 +95,7 @@ func (v *validatorsSnapshotCache) computeSnapshot(height uint64) (*validatorSnap
 	v.logger.Trace("Compute snapshot started...", "Height", height)
 
 	vs := validatorSnapshot{
-		Sprint:   GetSprint(height),
+		Epoch:    v.backendConsensus.GetEpochBaseHeight(height),
 		Snapshot: types.NewAccountSet(),
 	}
 
@@ -109,31 +109,31 @@ func (v *validatorsSnapshotCache) computeSnapshot(height uint64) (*validatorSnap
 			validator.Addr(), validator.GetStake(), true, true))
 	}
 
-	// Insert validatorSnapshot per sprint only
-	v.snapshots[GetSprint(height)] = &vs
+	// Insert validatorSnapshot per epoch only
+	v.snapshots[v.backendConsensus.GetEpochBaseHeight(height)] = &vs
 	return &vs, nil
 }
 
 // Cleanup cleans the validators cache in memory and db
 func (v *validatorsSnapshotCache) cleanup() error {
 	if len(v.snapshots) >= validatorSnapshotLimit {
-		latestSprint := uint64(0)
+		latestEpoch := uint64(0)
 
 		for e := range v.snapshots {
-			if e > latestSprint {
-				latestSprint = e
+			if e > latestEpoch {
+				latestEpoch = e
 			}
 		}
 
-		startSprint := latestSprint
+		startEpoch := latestEpoch
 		cache := make(map[uint64]*validatorSnapshot, numberOfSnapshotsToLeaveInMemory)
 
 		for i := 0; i < numberOfSnapshotsToLeaveInMemory; i++ {
-			if snapshot, exists := v.snapshots[startSprint]; exists {
-				cache[startSprint] = snapshot
+			if snapshot, exists := v.snapshots[startEpoch]; exists {
+				cache[startEpoch] = snapshot
 			}
 
-			startSprint -= SprintSize
+			startEpoch -= v.backendConsensus.GetEpochSize()
 		}
 
 		v.snapshots = cache
@@ -145,7 +145,7 @@ func (v *validatorsSnapshotCache) cleanup() error {
 }
 
 // getLastCachedSnapshot gets the latest snapshot cached
-func (v *validatorsSnapshotCache) getLastCachedSnapshot(currentSprint uint64) (*validatorSnapshot, error) {
-	cachedSnapshot := v.snapshots[currentSprint]
+func (v *validatorsSnapshotCache) getLastCachedSnapshot(currentEpoch uint64) (*validatorSnapshot, error) {
+	cachedSnapshot := v.snapshots[currentEpoch]
 	return cachedSnapshot, nil
 }

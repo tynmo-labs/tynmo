@@ -39,9 +39,9 @@ func (s *ProposerSnapshotStore) initialize(tx *bolt.Tx) error {
 	return nil
 }
 
-// GetProposerSnapshotResult gets the latest sprint proposer snapshot
-func (s *ProposerSnapshotStore) GetProposerSnapshotResult() (*types.SprintProposerSnapshotResult, error) {
-	var snapshot *types.SprintProposerSnapshotResult
+// GetProposerSnapshotResult gets the latest epoch proposer snapshot
+func (s *ProposerSnapshotStore) GetProposerSnapshotResult() (*types.EpochProposerSnapshotResult, error) {
+	var snapshot *types.EpochProposerSnapshotResult
 
 	err := s.db.View(func(tx *bolt.Tx) error {
 		value := tx.Bucket(proposerSnapshotBucket).Get(proposerSnapshotKey)
@@ -57,13 +57,13 @@ func (s *ProposerSnapshotStore) GetProposerSnapshotResult() (*types.SprintPropos
 			1 TODO should return error ?
 			2 return empty obj to deal with initial chain
 		*/
-		snapshot = &types.SprintProposerSnapshotResult{}
+		snapshot = &types.EpochProposerSnapshotResult{}
 	}
 	return snapshot, err
 }
 
-// WriteProposerSnapshotResult writes the latest sprint proposer snapshot
-func (s *ProposerSnapshotStore) WriteProposerSnapshotResult(snapshot *types.SprintProposerSnapshotResult) error {
+// WriteProposerSnapshotResult writes the latest epoch proposer snapshot
+func (s *ProposerSnapshotStore) WriteProposerSnapshotResult(snapshot *types.EpochProposerSnapshotResult) error {
 	raw, err := json.Marshal(snapshot)
 	if err != nil {
 		return err

@@ -134,27 +134,27 @@ func (i *backendIBFT) IsProposerV0(id []byte, height, round uint64) bool {
 	return types.BytesToAddress(id) == nextProposer.Addr()
 }
 
-func (i *backendIBFT) GetActiveSprintProposerSnapshot(height uint64) *SprintProposerSnapshot {
-	sprintHeightBase := GetSprint(height)
+func (i *backendIBFT) GetActiveEpochProposerSnapshot(height uint64) *EpochProposerSnapshot {
+	epochHeightBase := i.GetEpochBaseHeight(height)
 
-	if activeSprintProposerSnapshot != nil {
-		return activeSprintProposerSnapshot
+	if activeEpochProposerSnapshot != nil {
+		return activeEpochProposerSnapshot
 	}
 
-	activeSprintProposerSnapshot = &SprintProposerSnapshot{
-		CurSprintHeightBase: sprintHeightBase,
+	activeEpochProposerSnapshot = &EpochProposerSnapshot{
+		CurEpochHeightBase:  epochHeightBase,
 		ProposerSnapshotMap: make(map[uint64]*ProposerSnapshot),
 		Logger:              i.logger.Named("snapshot"),
 		backendConsensus:    i,
 		Status:              SpsStatusInit,
 	}
 
-	return activeSprintProposerSnapshot
+	return activeEpochProposerSnapshot
 }
 
 func (i *backendIBFT) IsProposer(id []byte, height, round uint64) bool {
-	asps := i.GetActiveSprintProposerSnapshot(height)
-	address, err := asps.GetProposerAddress(height, round)
+	aeps := i.GetActiveEpochProposerSnapshot(height)
+	address, err := aeps.GetProposerAddress(height, round)
 	if err != nil {
 		i.logger.Error("failed to calculate the new proposer", "height", height, "error", err)
 		return false

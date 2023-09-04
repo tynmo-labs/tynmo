@@ -79,27 +79,27 @@ func (m *PeerMap) BestPeer(skipMap map[peer.ID]bool) *NoForkPeer {
 	return bestPeer
 }
 
-type PeerSprintSnapshot struct {
+type PeerEpochSnapshot struct {
 	// identifier
 	ID     peer.ID
-	Result types.SprintProposerSnapshotResult
+	Result types.EpochProposerSnapshotResult
 }
 
-func (p *PeerSprintSnapshot) IsBetter(t *PeerSprintSnapshot) bool {
-	return p.Result.CurSprintHeightBase > t.Result.CurSprintHeightBase
+func (p *PeerEpochSnapshot) IsBetter(t *PeerEpochSnapshot) bool {
+	return p.Result.CurEpochHeightBase > t.Result.CurEpochHeightBase
 }
 
-func (m *PeerMap) PutSnapshots(snapshots ...*PeerSprintSnapshot) {
+func (m *PeerMap) PutSnapshots(snapshots ...*PeerEpochSnapshot) {
 	for _, snapshot := range snapshots {
 		m.Store(snapshot.ID.String(), snapshot)
 	}
 }
 
-// BestPeer returns the top of heap
-func (m *PeerMap) BestSnapshotPeer(skipMap map[peer.ID]bool) *PeerSprintSnapshot {
-	var bestPeer *PeerSprintSnapshot
+// BestSnapshotPeer returns the top of heap
+func (m *PeerMap) BestSnapshotPeer(skipMap map[peer.ID]bool) *PeerEpochSnapshot {
+	var bestPeer *PeerEpochSnapshot
 	m.Range(func(key, value interface{}) bool {
-		peer, _ := value.(*PeerSprintSnapshot)
+		peer, _ := value.(*PeerEpochSnapshot)
 		if skipMap != nil && skipMap[peer.ID] {
 			return true
 		}

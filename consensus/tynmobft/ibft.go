@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	DefaultEpochSize = 100000
+	DefaultEpochSize = 43200
 	IbftKeyName      = "validator.key"
 	KeyEpochSize     = "epochSize"
 
@@ -101,7 +101,7 @@ type backendIBFT struct {
 	// validatorsSnapshotCache
 	validatorsSnapshotCache *validatorsSnapshotCache
 
-	// Local sprint snapshot storage
+	// Local epoch snapshot storage
 	state *State
 }
 
@@ -253,18 +253,18 @@ func (i *backendIBFT) startSyncing() {
 	}
 }
 
-// startSyncingSprintSnapshots runs the syncer in the background to receive sprint snapshots from advanced peers
-func (i *backendIBFT) startSyncingSprintSnapshots() {
-	callSyncSprintSnapshotHook := func(result *types.SprintProposerSnapshotResult) {
-		if err := i.StoreSprintSnapshotResult(result); err != nil {
-			i.logger.Error("failed to call StoreSprintSnapshotResult", "error", err)
+// startSyncingEpochSnapshots runs the syncer in the background to receive epoch snapshots from advanced peers
+func (i *backendIBFT) startSyncingEpochSnapshots() {
+	callSyncEpochSnapshotHook := func(result *types.EpochProposerSnapshotResult) {
+		if err := i.StoreEpochSnapshotResult(result); err != nil {
+			i.logger.Error("failed to call StoreEpochSnapshotResult", "error", err)
 		} else {
 			i.initSnapshotCh <- struct{}{}
 		}
 	}
 
-	if err := i.syncer.SyncSprintSnapshot(
-		callSyncSprintSnapshotHook,
+	if err := i.syncer.SyncEpochSnapshot(
+		callSyncEpochSnapshotHook,
 	); err != nil {
 		i.logger.Error("watch sync failed", "err", err)
 	}
@@ -280,8 +280,8 @@ func (i *backendIBFT) Start() error {
 	// Start syncing blocks from other peers
 	go i.startSyncing()
 
-	// Start syncing sprint snapshots from other peers
-	// go i.startSyncingSprintSnapshots()
+	// Start syncing epoch snapshots from other peers
+	// go i.startSyncingEpochSnapshots()
 
 	// Start the actual consensus protocol
 	go i.startConsensus()
@@ -530,20 +530,6 @@ func (i *backendIBFT) PreCommitState(header *types.Header, txn *state.Transition
 	return hooks.PreCommitState(header, txn)
 }
 
-// GetEpoch returns the current epoch
-func (i *backendIBFT) GetEpoch(number uint64) uint64 {
-	if number%i.epochSize == 0 {
-		return number / i.epochSize
-	}
-
-	return number/i.epochSize + 1
-}
-
-// IsLastOfEpoch checks if the block number is the last of the epoch
-func (i *backendIBFT) IsLastOfEpoch(number uint64) bool {
-	return number > 0 && number%i.epochSize == 0
-}
-
 // Close closes the IBFT consensus mechanism, and does write back to disk
 func (i *backendIBFT) Close() error {
 	close(i.closeCh)
@@ -699,8 +685,4 @@ func (i *backendIBFT) WaitPeerCount() int {
 	height := i.blockchain.Header().Number
 	quorum := i.Quorum(height)
 	return int(quorum) - 1
-}
-
-func (i *backendIBFT) GetSprint(height uint64) uint64 {
-	return height - height%SprintSize
 }

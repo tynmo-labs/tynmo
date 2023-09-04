@@ -189,24 +189,24 @@ func (t *Transaction) MarshalRLPWith(arena *fastrlp.Arena) *fastrlp.Value {
 	return vv
 }
 
-func (sps *SprintProposerSnapshotResult) MarshalRLP() []byte {
-	return sps.MarshalRLPTo(nil)
+func (epsr *EpochProposerSnapshotResult) MarshalRLP() []byte {
+	return epsr.MarshalRLPTo(nil)
 }
 
-func (sps *SprintProposerSnapshotResult) MarshalRLPTo(dst []byte) []byte {
-	return MarshalRLPTo(sps.MarshalRLPWith, dst)
+func (epsr *EpochProposerSnapshotResult) MarshalRLPTo(dst []byte) []byte {
+	return MarshalRLPTo(epsr.MarshalRLPWith, dst)
 }
 
-func (sps *SprintProposerSnapshotResult) MarshalRLPWith(ar *fastrlp.Arena) *fastrlp.Value {
+func (epsr *EpochProposerSnapshotResult) MarshalRLPWith(ar *fastrlp.Arena) *fastrlp.Value {
 	vv := ar.NewArray()
 
-	vv.Set(ar.NewUint(sps.CurSprintHeightBase))
+	vv.Set(ar.NewUint(epsr.CurEpochHeightBase))
 
-	if len(sps.PrioritizedValidatorAddresses) == 0 {
+	if len(epsr.PrioritizedValidatorAddresses) == 0 {
 		vv.Set(ar.NewNullArray())
 	} else {
 		v0 := ar.NewArray()
-		for _, addr := range sps.PrioritizedValidatorAddresses {
+		for _, addr := range epsr.PrioritizedValidatorAddresses {
 			v0.Set(ar.NewBytes(addr.Bytes()))
 		}
 		vv.Set(v0)
