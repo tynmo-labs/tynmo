@@ -138,7 +138,7 @@ func (eps *EpochProposerSnapshot) GetProposerAddress(height uint64, round uint64
 	if eps.LoadFromAddress() {
 		if eps.CurEpochHeightBase >= eps.backendConsensus.GetEpochBaseHeight(height) {
 			return &eps.PrioritizedValidatorAddresses[addressIdx], nil
-		} else {
+		} else if !isEpochStart {
 			eps.Status = SpsStatusInit
 		}
 	}
