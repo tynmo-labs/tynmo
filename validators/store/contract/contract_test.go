@@ -15,6 +15,7 @@ import (
 	"tynmo/types"
 	"tynmo/validators"
 	"tynmo/validators/store"
+
 	"github.com/hashicorp/go-hclog"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +29,9 @@ var (
 	testBLSPubKey2 = newTestBLSKeyBytes()
 
 	testPredeployParams = stakingHelper.PredeployParams{
-		MinValidatorCount: 0,
-		MaxValidatorCount: 10,
+		BaseReward:   0x100000000,
+		RewardWallet: addr1,
+		Owner:        addr2,
 	}
 	testBlockGasLimit uint64 = 10000000
 )

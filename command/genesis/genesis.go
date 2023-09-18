@@ -88,6 +88,13 @@ func setFlags(cmd *cobra.Command) {
 		"the consensus protocol to be used",
 	)
 
+	cmd.Flags().StringVar(
+		&params.whitelistOwner,
+		WhitelistOwnerFlag,
+		"",
+		"the whitelist contract owner",
+	)
+
 	cmd.Flags().Uint64Var(
 		&params.epochSize,
 		epochSizeFlag,

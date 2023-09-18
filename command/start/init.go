@@ -11,8 +11,6 @@ import (
 	"tynmo/command/start/config"
 	"tynmo/consensus/ibft"
 	"tynmo/consensus/ibft/fork"
-	"tynmo/contracts/staking"
-	stakingHelper "tynmo/helper/staking"
 	"tynmo/network"
 	"tynmo/network/common"
 	"tynmo/secrets"
@@ -104,20 +102,6 @@ func (p *serverParams) setValidatorSetFromCli() error {
 	return nil
 }
 
-func (p *serverParams) predeployStakingSC() (*chain.GenesisAccount, error) {
-	stakingAccount, predeployErr := stakingHelper.PredeployStakingSC(
-		p.ibftValidators,
-		stakingHelper.PredeployParams{
-			// MinValidatorCount: p.minNumValidators,
-			// MaxValidatorCount: p.maxNumValidators,
-		})
-	if predeployErr != nil {
-		return nil, predeployErr
-	}
-
-	return stakingAccount, nil
-}
-
 func (p *serverParams) initGenesisConfig() error {
 	chainConfig := &chain.Chain{
 		// Name: p.name,
@@ -140,18 +124,6 @@ func (p *serverParams) initGenesisConfig() error {
 			},
 		},
 		Bootnodes: p.bootnodes,
-	}
-
-	// Predeploy staking smart contract if needed
-	stakingAccount, err := p.predeployStakingSC()
-	if err != nil {
-		return err
-	}
-
-	chainConfig.Genesis.Alloc[staking.AddrStakingContract] = stakingAccount
-
-	if err := fillPremineMap(chainConfig.Genesis.Alloc, p.premine); err != nil {
-		return err
 	}
 
 	p.genesisConfig = chainConfig

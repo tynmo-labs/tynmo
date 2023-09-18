@@ -16,7 +16,7 @@ const (
 )
 
 type SCAccountStakeFn struct {
-	Addr types.Address `abi:"addr"`
+	Addr types.Address `abi:"account"`
 }
 
 func (c *SCAccountStakeFn) Sig() []byte {

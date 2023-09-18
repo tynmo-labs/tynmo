@@ -5,6 +5,7 @@ import (
 	"tynmo/command/tbft/common"
 	"tynmo/command/tbft/staking"
 	"tynmo/command/tbft/unstaking"
+	"tynmo/command/tbft/whitelist"
 )
 
 func GetCommand() *cobra.Command {
@@ -23,5 +24,6 @@ func registerSubcommands(baseCmd *cobra.Command) {
 	baseCmd.AddCommand(
 		staking.GetCommand(),
 		unstaking.GetCommand(),
+		whitelist.GetCommand(),
 	)
 }

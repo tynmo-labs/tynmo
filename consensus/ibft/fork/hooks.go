@@ -120,16 +120,9 @@ func registerStakingContractDeploymentHooks(
 // getPreDeployParams returns PredeployParams for Staking Contract from IBFTFork
 func getPreDeployParams(fork *IBFTFork) stakingHelper.PredeployParams {
 	params := stakingHelper.PredeployParams{
-		MinValidatorCount: stakingHelper.MinValidatorCount,
-		MaxValidatorCount: stakingHelper.MaxValidatorCount,
-	}
-
-	if fork.MinValidatorCount != nil {
-		params.MinValidatorCount = fork.MinValidatorCount.Value
-	}
-
-	if fork.MaxValidatorCount != nil {
-		params.MaxValidatorCount = fork.MaxValidatorCount.Value
+		BaseReward:   stakingHelper.BaseReward,
+		RewardWallet: stakingHelper.RewardWallet,
+		Owner:        stakingHelper.Owner,
 	}
 
 	return params

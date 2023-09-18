@@ -19,15 +19,16 @@ import (
 )
 
 const (
-	dirFlag           = "dir"
-	nameFlag          = "name"
-	premineFlag       = "premine"
-	chainIDFlag       = "chain-id"
-	epochSizeFlag     = "epoch-size"
-	blockGasLimitFlag = "block-gas-limit"
-	posFlag           = "pos"
-	minValidatorCount = "min-validator-count"
-	maxValidatorCount = "max-validator-count"
+	dirFlag            = "dir"
+	nameFlag           = "name"
+	premineFlag        = "premine"
+	chainIDFlag        = "chain-id"
+	epochSizeFlag      = "epoch-size"
+	blockGasLimitFlag  = "block-gas-limit"
+	posFlag            = "pos"
+	minValidatorCount  = "min-validator-count"
+	maxValidatorCount  = "max-validator-count"
+	WhitelistOwnerFlag = "whitelist-owner"
 )
 
 // Legacy flags that need to be preserved for running clients
@@ -63,6 +64,7 @@ type genesisParams struct {
 
 	minNumValidators uint64
 	maxNumValidators uint64
+	whitelistOwner   string
 
 	rawIBFTValidatorType string
 	ibftValidatorType    validators.ValidatorType
@@ -358,8 +360,9 @@ func (p *genesisParams) predeployStakingSC() (*chain.GenesisAccount, error) {
 	stakingAccount, predeployErr := stakingHelper.PredeployStakingSC(
 		p.ibftValidators,
 		stakingHelper.PredeployParams{
-			MinValidatorCount: p.minNumValidators,
-			MaxValidatorCount: p.maxNumValidators,
+			BaseReward:   stakingHelper.BaseReward,
+			RewardWallet: stakingHelper.RewardWallet,
+			Owner:        types.StringToAddress(p.whitelistOwner),
 		})
 	if predeployErr != nil {
 		return nil, predeployErr
