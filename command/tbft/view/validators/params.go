@@ -1,4 +1,4 @@
-package show
+package validators
 
 import (
 	"crypto/ecdsa"
@@ -13,24 +13,18 @@ import (
 )
 
 const (
-	AccountDirFlag       = "data-dir"
-	PrivateKeyFlag       = "private-key"
-	ValidatorAddressFlag = "address"
-	OperateFlag          = "operate"
+	AccountDirFlag = "data-dir"
+	PrivateKeyFlag = "private-key"
 
-	AccountDirFlagDesc   = "the directory for the tynmo chain data if the local FS is used"
-	ValidatorAddressDesc = "the account address to operate"
-	OperateDesc          = "operate type: add/remove/get"
-	PrivateKeyDesc       = "private key of the validator"
+	AccountDirFlagDesc = "the directory for the tynmo chain data if the local FS is used"
+	PrivateKeyDesc     = "private key of the validator"
 )
 
 var (
-	errNoNewValidatorsProvided          = errors.New("no new validators addresses provided")
 	errPrivateKeyOrLocalDirNotSpecified = errors.New("only one of private-key and data-dir must be specified")
-	errValidOperateType                 = errors.New("invalid operate type, only add/remove")
 )
 
-type whitelistParams struct {
+type viewParams struct {
 	// private key related
 	accountDir    string
 	privateKeyStr string
@@ -40,7 +34,7 @@ type whitelistParams struct {
 	jsonRPC string
 }
 
-func (p *whitelistParams) validateFlags() error {
+func (p *viewParams) validateFlags() error {
 	if (p.accountDir == "" && p.privateKeyStr == "") ||
 		(p.accountDir != "" && p.privateKeyStr != "") {
 		return errPrivateKeyOrLocalDirNotSpecified
@@ -51,14 +45,14 @@ func (p *whitelistParams) validateFlags() error {
 	return err
 }
 
-func (p *whitelistParams) initRawParams() error {
+func (p *viewParams) initRawParams() error {
 	if err := p.initPrivateKey(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *whitelistParams) initPrivateKey() error {
+func (p *viewParams) initPrivateKey() error {
 	var err error
 	if p.privateKeyStr != "" {
 		p.privateKey, err = crypto.ParseECDSAPrivateKey(types.StringToBytes(p.privateKeyStr))
@@ -70,12 +64,12 @@ func (p *whitelistParams) initPrivateKey() error {
 }
 
 // PrivateKey returns a private key in data directory
-func (p *whitelistParams) initPrivateKeyFromLocalDataDir() (*ecdsa.PrivateKey, error) {
+func (p *viewParams) initPrivateKeyFromLocalDataDir() (*ecdsa.PrivateKey, error) {
 	return crypto.GenerateOrReadPrivateKey(filepath.Join(p.accountDir, "consensus", tynmobft.IbftKeyName))
 }
 
-func (p *whitelistParams) getResult(list []string) command.CommandResult {
-	return &showWhitelistResult{
+func (p *viewParams) getResult(list []string) command.CommandResult {
+	return &viewResult{
 		Validators: list,
 	}
 }

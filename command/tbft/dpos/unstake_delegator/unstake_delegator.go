@@ -1,11 +1,8 @@
-package show
+package unstake_delegator
 
 import (
-	"errors"
-
 	"tynmo/command"
 	"tynmo/command/helper"
-	"tynmo/command/tbft/whitelist/common"
 	"tynmo/contracts/abis"
 	"tynmo/contracts/staking"
 
@@ -17,20 +14,19 @@ import (
 	"github.com/umbracle/ethgo/wallet"
 )
 
-var params whitelistParams
-var errUnexpectedResp = errors.New("unexpected response")
+var params stakeParams
 
 func GetCommand() *cobra.Command {
-	whitelistCmd := &cobra.Command{
-		Use:     "show",
-		Short:   "show whitelist accounts",
+	stakeCmd := &cobra.Command{
+		Use:     "unstake-delegator",
+		Short:   "Unstakes the amount sent at a delegatee as delegator",
 		PreRunE: runPreRun,
 		Run:     runCommand,
 	}
 
-	setFlags(whitelistCmd)
+	setFlags(stakeCmd)
 
-	return whitelistCmd
+	return stakeCmd
 }
 
 func setFlags(cmd *cobra.Command) {
@@ -48,6 +44,13 @@ func setFlags(cmd *cobra.Command) {
 		PrivateKeyDesc,
 	)
 
+	cmd.Flags().StringVar(
+		&params.delegatee,
+		DelegateeFlag,
+		"",
+		DelegateeDesc,
+	)
+
 	cmd.MarkFlagsMutuallyExclusive(AccountDirFlag, PrivateKeyFlag)
 }
 
@@ -61,8 +64,6 @@ func runPreRun(cmd *cobra.Command, _ []string) error {
 	return params.initRawParams()
 }
 
-var Number = ethgo.BlockNumber(41855)
-
 func runCommand(cmd *cobra.Command, _ []string) {
 	outputter := command.InitializeOutputter(cmd)
 	defer outputter.WriteOutput()
@@ -70,14 +71,7 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	abiContract := abi.MustNewABI(abis.StakingJSONABI)
 
 	addr := ethgo.Address(staking.AddrStakingContract)
-
 	client, err := jsonrpc.NewClient(params.jsonRPC)
-	if err != nil {
-		outputter.SetError(err)
-		return
-	}
-
-	blockNumber, err := common.BlockNumber(client)
 	if err != nil {
 		outputter.SetError(err)
 		return
@@ -91,33 +85,23 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	}
 	c := contract.NewContract(addr, abiContract, opts...)
 
-	list, err := runGet(c, blockNumber)
+	txn, err := c.Txn("unstakeDelegator", params.delegatee)
 	if err != nil {
 		outputter.SetError(err)
 		return
 	}
 
-	outputter.SetCommandResult(params.getResult(list))
-}
-
-func runGet(c *contract.Contract, number ethgo.BlockNumber) ([]string, error) {
-	method := common.FnGetWhitelist
-	res, err := c.Call(method, number)
+	err = txn.Do()
 	if err != nil {
-		return nil, err
+		outputter.SetError(err)
+		return
 	}
 
-	list, ok := res["0"]
-	if !ok {
-		return nil, errUnexpectedResp
+	receipt, err := txn.Wait()
+	if err != nil {
+		outputter.SetError(err)
+		return
 	}
 
-	if addresses, ok := list.([]ethgo.Address); ok {
-		ret := []string{}
-		for _, addr := range addresses {
-			ret = append(ret, addr.String())
-		}
-		return ret, nil
-	}
-	return nil, errUnexpectedResp
+	outputter.SetCommandResult(params.getResult(receipt.TransactionHash.String()))
 }

@@ -360,7 +360,7 @@ func (p *genesisParams) predeployStakingSC() (*chain.GenesisAccount, error) {
 	stakingAccount, predeployErr := stakingHelper.PredeployStakingSC(
 		p.ibftValidators,
 		stakingHelper.PredeployParams{
-			BaseReward:   stakingHelper.BaseReward,
+			// BaseReward:   stakingHelper.BaseReward,
 			RewardWallet: stakingHelper.RewardWallet,
 			Owner:        types.StringToAddress(p.whitelistOwner),
 		})

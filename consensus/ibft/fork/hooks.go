@@ -120,7 +120,7 @@ func registerStakingContractDeploymentHooks(
 // getPreDeployParams returns PredeployParams for Staking Contract from IBFTFork
 func getPreDeployParams(fork *IBFTFork) stakingHelper.PredeployParams {
 	params := stakingHelper.PredeployParams{
-		BaseReward:   stakingHelper.BaseReward,
+		// BaseReward:   stakingHelper.BaseReward,
 		RewardWallet: stakingHelper.RewardWallet,
 		Owner:        stakingHelper.Owner,
 	}

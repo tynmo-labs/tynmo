@@ -3,8 +3,10 @@ package tbft
 import (
 	"github.com/spf13/cobra"
 	"tynmo/command/tbft/common"
+	"tynmo/command/tbft/dpos"
 	"tynmo/command/tbft/staking"
 	"tynmo/command/tbft/unstaking"
+	"tynmo/command/tbft/view"
 	"tynmo/command/tbft/whitelist"
 )
 
@@ -25,5 +27,7 @@ func registerSubcommands(baseCmd *cobra.Command) {
 		staking.GetCommand(),
 		unstaking.GetCommand(),
 		whitelist.GetCommand(),
+		dpos.GetCommand(),
+		view.GetCommand(),
 	)
 }

@@ -4,11 +4,6 @@ const StakingJSONABI = `[
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "newBaseReward",
-        "type": "uint256"
-      },
-      {
         "internalType": "address",
         "name": "newRewardWallet",
         "type": "address"
@@ -23,15 +18,17 @@ const StakingJSONABI = `[
     "type": "constructor"
   },
   {
+    "anonymous": false,
     "inputs": [
       {
-        "internalType": "string",
-        "name": "only",
-        "type": "string"
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       }
     ],
-    "name": "Unauthorized",
-    "type": "error"
+    "name": "AddedToDelegatee",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -39,7 +36,7 @@ const StakingJSONABI = `[
       {
         "indexed": true,
         "internalType": "address",
-        "name": "validator",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -109,7 +106,20 @@ const StakingJSONABI = `[
       {
         "indexed": true,
         "internalType": "address",
-        "name": "validator",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "RemovedFromDelegatee",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -130,6 +140,12 @@ const StakingJSONABI = `[
         "internalType": "uint256",
         "name": "totalReward",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address[]",
+        "name": "validators",
+        "type": "address[]"
       }
     ],
     "name": "RewardDistributed",
@@ -141,7 +157,13 @@ const StakingJSONABI = `[
       {
         "indexed": true,
         "internalType": "address",
-        "name": "account",
+        "name": "validator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "staker",
         "type": "address"
       },
       {
@@ -165,6 +187,12 @@ const StakingJSONABI = `[
       },
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "staker",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
@@ -179,7 +207,7 @@ const StakingJSONABI = `[
       {
         "indexed": false,
         "internalType": "address",
-        "name": "validator",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -192,11 +220,30 @@ const StakingJSONABI = `[
       {
         "indexed": true,
         "internalType": "address",
-        "name": "validator",
+        "name": "account",
         "type": "address"
       }
     ],
     "name": "ValidatorRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawReward",
     "type": "event"
   },
   {
@@ -220,26 +267,33 @@ const StakingJSONABI = `[
   },
   {
     "inputs": [],
-    "name": "VALIDATOR_THRESHOLD",
+    "name": "DELEGATEE_THRESHOLD",
     "outputs": [
       {
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint128"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "DELEGATOR_THRESHOLD",
+    "outputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       }
     ],
-    "name": "_addressToValidatorIndex",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "VALIDATOR_THRESHOLD",
     "outputs": [
       {
         "internalType": "uint256",
@@ -277,13 +331,114 @@ const StakingJSONABI = `[
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "baseReward",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      }
+    ],
+    "name": "delegateeInfo",
     "outputs": [
       {
-        "internalType": "uint256",
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "stake",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reward",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "percentage",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "endEpoch",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "delegators",
+            "type": "address[]"
+          }
+        ],
+        "internalType": "struct Delegatee",
         "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "delegatees",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "count",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      }
+    ],
+    "name": "delegatorInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "stake",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reward",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Delegator",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      }
+    ],
+    "name": "delegatorsInDelegatee",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -297,6 +452,11 @@ const StakingJSONABI = `[
         "type": "uint256"
       },
       {
+        "internalType": "uint256[]",
+        "name": "_rewardToDistribute",
+        "type": "uint256[]"
+      },
+      {
         "internalType": "address[]",
         "name": "validatorList",
         "type": "address[]"
@@ -305,44 +465,6 @@ const StakingJSONABI = `[
     "name": "distributeRewardFor",
     "outputs": [],
     "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isValidator",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isWhitelist",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -391,13 +513,6 @@ const StakingJSONABI = `[
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "register",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "bytes",
@@ -408,6 +523,31 @@ const StakingJSONABI = `[
     "name": "registerBLSPublicKey",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "percentage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endEpoch",
+        "type": "uint256"
+      }
+    ],
+    "name": "registerDelegatee",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "registerValidator",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -427,11 +567,34 @@ const StakingJSONABI = `[
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newBaseReward",
+        "name": "epochId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endEpoch",
         "type": "uint256"
       }
     ],
-    "name": "setBaseReward",
+    "name": "setDelegateeEndEpoch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "epochId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "percentage",
+        "type": "uint256"
+      }
+    ],
+    "name": "setDelegateePercentage",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -452,6 +615,19 @@ const StakingJSONABI = `[
   {
     "inputs": [],
     "name": "stake",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      }
+    ],
+    "name": "stakeDelegator",
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
@@ -498,6 +674,19 @@ const StakingJSONABI = `[
   {
     "inputs": [],
     "name": "unstake",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      }
+    ],
+    "name": "unstakeDelegator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -562,6 +751,11 @@ const StakingJSONABI = `[
         "internalType": "uint256",
         "name": "isWhitelisted",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "isDelegatee",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -576,6 +770,37 @@ const StakingJSONABI = `[
       }
     ],
     "name": "whitelistValidators",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawDelegatorReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "delegatee",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "withdrawAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawDelegatorStake",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -604,7 +829,7 @@ const StakingJSONABI = `[
     "stateMutability": "payable",
     "type": "receive"
   }
-]`
+  ]`
 
 const StressTestJSONABI = `[
     {

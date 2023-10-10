@@ -15,7 +15,7 @@ const (
 	FnRegisterBLSPublicKey = "registerBLSPublicKey"
 	FnAddWhitelist         = "whitelistValidators"
 	FnGetWhitelist         = "whitelist"
-	FnRegister             = "register"
+	FnRegister             = "registerValidator"
 	FnTransferOwnership    = "transferOwnership"
 	FnAcceptOwnership      = "acceptOwnership"
 )
